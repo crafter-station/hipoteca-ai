@@ -2,6 +2,7 @@
 
 import { SectionWrapper } from "@/components/landing/section-wrapper";
 import { SmoothScrollLink } from "@/components/landing/smooth-scroll-link";
+import { Header } from "@/components/shared/header";
 import {
 	Accordion,
 	AccordionContent,
@@ -29,18 +30,15 @@ import {
 	FileUp,
 	Home,
 	Layers,
-	Menu,
 	SearchCheck,
 	ShieldCheck,
 	Target,
 	TrendingUp,
 	UploadCloud,
 	Users,
-	X,
 	Zap,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react"; // For mobile menu
 
 // Re-styled Feature Card for the new aesthetic
 const ModernFeatureCard = ({
@@ -147,104 +145,10 @@ const ModernPricingCard = ({
 );
 
 export default function LandingPage() {
-	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-	const navLinks = [
-		{ href: "#hero", label: "Inicio" },
-		{ href: "#problem", label: "El Reto" },
-		{ href: "#solution", label: "Solución" },
-		{ href: "#features", label: "Capacidades" },
-		{ href: "#pricing", label: "Planes" },
-		{ href: "#faq", label: "FAQ" },
-	];
-
-	const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
-
 	return (
 		<div className="flex min-h-screen flex-col bg-background font-sans text-foreground">
 			{/* Header */}
-			<header className="sticky top-0 z-50 w-full border-border/30 border-b bg-background/80 backdrop-blur-lg">
-				<div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-					<SmoothScrollLink
-						href="#hero"
-						className="group flex items-center gap-2"
-					>
-						<Bot className="h-8 w-8 text-primary group-hover:animate-subtle-pulse" />
-						<span className="font-bold text-2xl text-foreground">
-							Hipoteca<span className="text-primary">Copilot</span>
-						</span>
-					</SmoothScrollLink>
-
-					{/* Desktop Navigation */}
-					<nav className="hidden items-center gap-1 md:flex">
-						{navLinks.map((link) => (
-							<SmoothScrollLink
-								key={link.label}
-								href={link.href}
-								className="rounded-md px-3 py-2 font-medium text-muted-foreground text-sm transition-colors hover:bg-primary/10 hover:text-primary"
-							>
-								{link.label}
-							</SmoothScrollLink>
-						))}
-					</nav>
-
-					<div className="flex items-center gap-3">
-						<Button
-							variant="ghost"
-							asChild
-							className="hidden text-muted-foreground hover:bg-primary/10 hover:text-primary md:inline-flex"
-						>
-							<SmoothScrollLink href="/dashboard">Log In</SmoothScrollLink>
-						</Button>
-						<Button
-							asChild
-							className="bg-primary text-primary-foreground shadow-md transition-shadow hover:bg-primary/90 hover:shadow-lg"
-						>
-							<SmoothScrollLink href="/dashboard">
-								Empezar Gratis
-							</SmoothScrollLink>
-						</Button>
-						{/* Mobile Menu Button */}
-						<Button
-							variant="ghost"
-							size="icon"
-							className="md:hidden"
-							onClick={toggleMobileMenu}
-						>
-							{mobileMenuOpen ? (
-								<X className="h-6 w-6" />
-							) : (
-								<Menu className="h-6 w-6" />
-							)}
-						</Button>
-					</div>
-				</div>
-				{/* Mobile Menu */}
-				{mobileMenuOpen && (
-					<div className="border-border/30 border-t bg-background/95 backdrop-blur-lg md:hidden">
-						<nav className="flex flex-col items-center gap-2 px-4 py-4">
-							{navLinks.map((link) => (
-								<SmoothScrollLink
-									key={link.label}
-									href={link.href}
-									className="block w-full rounded-md px-3 py-3 text-center font-medium text-base text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-									onClick={toggleMobileMenu}
-								>
-									{link.label}
-								</SmoothScrollLink>
-							))}
-							<Button
-								variant="outline"
-								asChild
-								className="mt-2 w-full border-primary text-primary hover:bg-primary/10"
-								onClick={toggleMobileMenu}
-							>
-								<SmoothScrollLink href="/dashboard">Log In</SmoothScrollLink>
-							</Button>
-						</nav>
-					</div>
-				)}
-			</header>
+			<Header />
 
 			<main className="flex-grow">
 				{/* Hero Section */}
@@ -717,20 +621,22 @@ export default function LandingPage() {
 								Enlaces Rápidos
 							</h3>
 							<ul className="space-y-2">
-								{navLinks.slice(1).map(
-									(
-										link, // Exclude "Inicio"
-									) => (
-										<li key={link.label}>
-											<SmoothScrollLink
-												href={link.href}
-												className="text-muted-foreground text-sm hover:text-primary"
-											>
-												{link.label}
-											</SmoothScrollLink>
-										</li>
-									),
-								)}
+								{[
+									{ href: "#problem", label: "El Reto" },
+									{ href: "#solution", label: "Solución" },
+									{ href: "#features", label: "Capacidades" },
+									{ href: "#pricing", label: "Planes" },
+									{ href: "#faq", label: "FAQ" },
+								].map((link) => (
+									<li key={link.label}>
+										<SmoothScrollLink
+											href={link.href}
+											className="text-muted-foreground text-sm hover:text-primary"
+										>
+											{link.label}
+										</SmoothScrollLink>
+									</li>
+								))}
 							</ul>
 						</div>
 						<div>
