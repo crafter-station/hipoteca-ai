@@ -49,7 +49,10 @@ export async function saveMessages({
 			);
 
 			if (!existingMessage) {
-				pipeline.lpush<Message>(key, newMessage);
+				pipeline.lpush<Message>(key, {
+					...newMessage,
+					createdAt: new Date(),
+				});
 			} else {
 				if (JSON.stringify(existingMessage) !== JSON.stringify(newMessage)) {
 					pipeline.lset<Message>(key, i, newMessage);
