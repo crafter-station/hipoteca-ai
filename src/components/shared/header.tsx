@@ -2,8 +2,8 @@
 
 import { SmoothScrollLink } from "@/components/landing/smooth-scroll-link";
 import { Button } from "@/components/ui/button";
-import { Bot } from "lucide-react";
 import Link from "next/link";
+import { Logo } from "./logo";
 
 export function Header() {
 	const navLinks = [
@@ -20,13 +20,10 @@ export function Header() {
 			<div className="flex min-w-0 flex-1 items-center">
 				<SmoothScrollLink
 					href="#hero"
-					className="mr-1 inline-flex h-10 shrink-0 cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border-none bg-transparent px-4 font-medium text-sm outline-none transition-all hover:bg-transparent focus:bg-transparent focus-visible:bg-transparent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 has-[>svg]:p-0 [&>svg]:size-8 [&>svg]:w-7"
+					className="mr-1 inline-flex shrink-0 cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border-none bg-transparent px-4 font-medium text-sm outline-none transition-all hover:bg-transparent focus:bg-transparent focus-visible:bg-transparent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 has-[>svg]:p-0 [&>svg]:size-12"
 				>
-					<Bot className="h-8 w-8 text-primary group-hover:animate-subtle-pulse" />
-					<span className="font-bold text-foreground text-xl">
-						Hipoteca<span className="text-primary">Copilot</span>
-					</span>
-					<span className="sr-only">HipotecaCopilot</span>
+					<Logo className="size-16" />
+					<span className="font-bold text-foreground text-sm">HipotecaAI</span>
 				</SmoothScrollLink>
 			</div>
 
