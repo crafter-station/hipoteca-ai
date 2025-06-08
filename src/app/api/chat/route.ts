@@ -38,8 +38,6 @@ export async function POST(req: Request) {
 			message,
 		});
 
-		console.log(messages);
-
 		const result = streamText({
 			model: openai("gpt-4.1-nano"),
 			messages,
