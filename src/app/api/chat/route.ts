@@ -1,4 +1,3 @@
-import { getMessages, setMessages } from "@/redis";
 import { openai } from "@ai-sdk/openai";
 import {
 	type Message,
@@ -7,6 +6,9 @@ import {
 	createIdGenerator,
 	streamText,
 } from "ai";
+
+import { getMessages, setMessages } from "@/redis";
+import { searchQuestions } from "@/tools/search-questions";
 
 interface ChatRequest {
 	message: Message;
@@ -56,6 +58,10 @@ export async function POST(req: Request) {
 			experimental_generateMessageId: createIdGenerator({
 				size: 16,
 			}),
+			tools: {
+				searchQuestions,
+			},
+			maxSteps: 10,
 		});
 
 		// consume the stream to ensure it runs to completion & triggers onFinish
