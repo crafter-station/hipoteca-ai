@@ -3,6 +3,7 @@
 import { SectionWrapper } from "@/components/landing/section-wrapper";
 import { SmoothScrollLink } from "@/components/landing/smooth-scroll-link";
 import { Header } from "@/components/shared/header";
+import { PdfViewer } from "@/components/shared/pdf-viewer";
 import {
 	Accordion,
 	AccordionContent,
@@ -150,7 +151,7 @@ export default function LandingPage() {
 			{/* Header */}
 			<Header />
 
-			<main className="flex-grow">
+			<main className="">
 				{/* Hero Section */}
 				<SectionWrapper
 					id="hero"
@@ -185,6 +186,52 @@ export default function LandingPage() {
 							>
 								<SmoothScrollLink href="#problem">
 									Descubre Cómo <ChevronRight className="ml-2 h-5 w-5" />
+								</SmoothScrollLink>
+							</Button>
+						</div>
+					</div>
+				</SectionWrapper>
+
+				{/* PDF Demo Section */}
+				<SectionWrapper id="demo" className="bg-muted/30">
+					<div className="w-full max-w-6xl animate-fade-in-up text-center">
+						<div className="mb-8">
+							<span className="mb-4 inline-block rounded-full bg-primary/10 px-4 py-1.5 font-semibold text-primary text-sm">
+								Demo en Vivo
+							</span>
+							<h2 className="mb-4 font-bold text-3xl text-foreground md:text-4xl lg:text-5xl">
+								Ve Nuestra <span className="text-primary">IA en Acción</span>
+							</h2>
+							<p className="mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl">
+								Explora este contrato hipotecario de ejemplo para ver cómo
+								transformamos documentos complejos en información clara y
+								accionable.
+							</p>
+						</div>
+
+						{/* PDF Viewer Container */}
+						<div className="mx-auto h-[600px] max-w-5xl overflow-hidden rounded-xl border border-border/50 bg-background shadow-2xl shadow-primary/10">
+							<PdfViewer pdfUrl="https://cdn.codewithmosh.com/image/upload/v1721763853/guides/web-roadmap.pdf" />
+						</div>
+
+						<div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+							<Button
+								size="lg"
+								asChild
+								className="transform bg-primary px-8 py-4 text-lg text-primary-foreground shadow-lg transition-all duration-300 hover:scale-105 hover:bg-primary/90 hover:shadow-primary/40"
+							>
+								<SmoothScrollLink href="/dashboard">
+									Prueba con tu Documento
+								</SmoothScrollLink>
+							</Button>
+							<Button
+								size="lg"
+								variant="outline"
+								asChild
+								className="transform border-muted-foreground/50 px-8 py-4 text-lg text-muted-foreground transition-all duration-300 hover:scale-105 hover:border-primary hover:bg-primary/10 hover:text-primary"
+							>
+								<SmoothScrollLink href="#problem">
+									Continúa Leyendo <ChevronRight className="ml-2 h-5 w-5" />
 								</SmoothScrollLink>
 							</Button>
 						</div>
