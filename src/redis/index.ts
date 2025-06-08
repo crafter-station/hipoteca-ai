@@ -52,7 +52,9 @@ export async function saveMessages({
 				pipeline.lpush<Message>(key, {
 					...newMessage,
 					createdAt:
-						newMessage.role === "assistant" ? new Date() : newMessage.createdAt,
+						newMessage.role === "user"
+							? newMessage.createdAt
+							: new Date(Date.now() + 1000),
 				});
 			} else {
 				if (JSON.stringify(existingMessage) !== JSON.stringify(newMessage)) {
