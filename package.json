@@ -60,6 +60,7 @@
 		"sonner": "^2.0.5",
 		"tailwind-merge": "^3.3.0",
 		"vaul": "^1.1.2",
+		"weaviate-client": "^3.6.0",
 		"zod": "^3.25.56"
 	},
 	"devDependencies": {

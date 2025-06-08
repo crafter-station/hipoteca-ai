@@ -61,6 +61,22 @@ export function Chat({
 							>
 								{m.role === "user" ? "user@terminal:~$ " : "ai@system:~$ "}
 							</span>
+							{m.parts
+								.filter((p) => p.type === "tool-invocation")
+								.map(({ toolInvocation }) => (
+									<span
+										key={toolInvocation.toolCallId}
+										className="text-green-600"
+									>
+										{toolInvocation.toolName === "searchQuestions" ? (
+											<span>
+												Searching questions for "{toolInvocation.args.query}"
+											</span>
+										) : null}
+									</span>
+								))}
+							<br />
+
 							{m.content}
 						</div>
 					))}
