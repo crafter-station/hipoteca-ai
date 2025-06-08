@@ -41,21 +41,40 @@ export function Chat({
 
 	// simplified rendering code, extend as needed:
 	return (
-		<div>
-			{messages
-				.sort(
-					(b, a) =>
-						(b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
-				)
-				.map((m) => (
-					<div key={m.id}>
-						{m.role === "user" ? "User: " : "AI: "}
-						{m.content}
-					</div>
-				))}
+		<div className="min-h-screen border-2 border-gray-700 bg-black p-5 font-mono text-green-400">
+			<div className="mb-5 max-h-[70vh] overflow-y-auto border border-gray-700 bg-gray-900 p-2.5">
+				{messages
+					.sort(
+						(b, a) =>
+							(b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0),
+					)
+					.map((m) => (
+						<div
+							key={m.id}
+							className="mb-2.5 border-gray-700 border-b border-dotted py-1.5"
+						>
+							<span
+								className={
+									m.role === "user" ? "text-cyan-400" : "text-green-400"
+								}
+							>
+								{m.role === "user" ? "user@terminal:~$ " : "ai@system:~$ "}
+							</span>
+							{m.content}
+						</div>
+					))}
+			</div>
 
 			<form onSubmit={handleSubmit}>
-				<input value={input} onChange={handleInputChange} />
+				<div className="flex items-center">
+					<span className="mr-2 text-cyan-400">&gt;</span>
+					<input
+						value={input}
+						onChange={handleInputChange}
+						className="flex-1 border-none bg-transparent p-1.5 font-mono text-base text-green-400 outline-none"
+						placeholder="Type your message..."
+					/>
+				</div>
 			</form>
 		</div>
 	);
