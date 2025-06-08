@@ -1,21 +1,21 @@
 "use client";
 
-import { SectionWrapper } from "@/src/components/landing/section-wrapper";
-import { SmoothScrollLink } from "@/src/components/landing/smooth-scroll-link";
+import { SectionWrapper } from "@/components/landing/section-wrapper";
+import { SmoothScrollLink } from "@/components/landing/smooth-scroll-link";
 import {
 	Accordion,
 	AccordionContent,
 	AccordionItem,
 	AccordionTrigger,
-} from "@/src/components/ui/accordion";
-import { Button } from "@/src/components/ui/button";
+} from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@/src/components/ui/card";
+} from "@/components/ui/card";
 import {
 	ArrowRight,
 	BarChart3,
