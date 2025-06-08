@@ -1,4 +1,4 @@
-import { getMessages, saveMessages } from "@/redis";
+import { getMessages, setMessages } from "@/redis";
 import { openai } from "@ai-sdk/openai";
 import {
 	type Message,
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 					responseMessages: response.messages,
 				});
 
-				await saveMessages({
+				await setMessages({
 					id,
 					originalMessages: existingMessages,
 					newMessages: updatedMessages,
