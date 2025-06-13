@@ -1,10 +1,13 @@
 "use client";
 
-import type { ChatSummary } from "@/lib/chat-history";
-import { useQuery } from "@tanstack/react-query";
-import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+
+import { useQuery } from "@tanstack/react-query";
+import { PlusCircle } from "lucide-react";
+
+import type { ChatSummary } from "@/lib/chat-history";
+import { cn } from "@/lib/utils";
 
 export function ChatSidebar() {
 	const params = useParams<{ id: string }>();
@@ -23,9 +26,9 @@ export function ChatSidebar() {
 	});
 
 	return (
-		<div className="flex h-screen w-64 flex-col border-gray-200 border-green-700 border-r bg-black bg-gray-50 font-mono dark:border-green-700 dark:bg-black dark:font-mono">
+		<div className="flex h-screen w-64 flex-col border-gray-200 border-r bg-gray-50 font-mono dark:border-green-700 dark:bg-black dark:font-mono">
 			{/* New Chat Button */}
-			<div className="border-gray-200 border-green-700 border-b bg-gray-50 p-4 dark:border-green-700 dark:bg-black">
+			<div className="border-gray-200 border-b bg-gray-50 p-4 dark:border-green-700 dark:bg-black">
 				<Link
 					href="/chat"
 					className={`flex items-center gap-2 rounded border px-4 py-2 font-bold text-sm transition-colors shadow-sm${
@@ -49,20 +52,30 @@ export function ChatSidebar() {
 							<Link
 								key={chat.id}
 								href={`/chat/${chat.id}`}
-								className={`mb-2 block rounded border p-3 text-sm transition-colors font-mono${
+								className={cn(
+									"mb-2 block rounded border p-3 font-mono text-sm transition-colors",
 									isActive
 										? "border-cyan-400 bg-green-50 text-cyan-700 dark:border-cyan-400 dark:bg-green-950 dark:text-cyan-300"
-										: "border-green-300 bg-white text-green-700 hover:bg-green-100 hover:text-cyan-700 dark:border-green-700 dark:bg-black dark:text-green-300 dark:hover:bg-green-900 dark:hover:text-cyan-300"
-								}
-								`}
+										: "border-green-300 bg-white text-green-700 hover:bg-green-100 hover:text-cyan-700 dark:border-green-700 dark:bg-black dark:text-green-300 dark:hover:bg-green-900 dark:hover:text-cyan-300",
+								)}
 							>
 								<div
-									className={`truncate font-bold ${isActive ? "text-cyan-700 dark:text-cyan-300" : "text-green-700 dark:text-green-300"}`}
+									className={cn(
+										"truncate font-bold",
+										isActive
+											? "text-cyan-700 dark:text-cyan-300"
+											: "text-green-700 dark:text-green-300",
+									)}
 								>
 									{chat.title}
 								</div>
 								<div
-									className={`mt-1 text-xs ${isActive ? "text-cyan-500 dark:text-cyan-200" : "text-green-500 dark:text-green-500"}`}
+									className={cn(
+										"mt-1 text-xs",
+										isActive
+											? "text-cyan-500 dark:text-cyan-200"
+											: "text-green-500 dark:text-green-500",
+									)}
 								>
 									{new Date(chat.lastMessageAt).toLocaleString()}
 								</div>

@@ -1,7 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import React from "react";
+
+import { useRouter } from "next/navigation";
 
 import { type Message, useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
