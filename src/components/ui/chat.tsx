@@ -22,7 +22,7 @@ export function Chat({
 		initialMessages, // initial messages if provided
 		sendExtraMessageFields: true, // send id and createdAt for each message
 		experimental_prepareRequestBody({ messages, id }) {
-			return { message: messages[messages.length - 1], id };
+			return { message: messages[messages.length - 1], chat_id: id };
 		},
 		generateId: createIdGenerator({
 			size: 16,

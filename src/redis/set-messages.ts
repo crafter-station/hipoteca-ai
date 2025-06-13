@@ -1,20 +1,20 @@
 import type { Message } from "ai";
 
 import { redis } from "@/clients/redis";
-
-import { getChatKey } from "./keys";
+import { updateChatMetadata } from "./chat-management";
+import { getChatMessagesKey } from "./keys";
 
 export async function setMessages({
-	id,
+	chatId,
 	originalMessages,
 	newMessages,
 }: {
-	id: string;
+	chatId: string;
 	originalMessages: Message[];
 	newMessages: Message[];
 }): Promise<void> {
 	try {
-		const key = getChatKey(id);
+		const key = getChatMessagesKey(chatId);
 
 		const pipeline = redis.pipeline();
 
@@ -40,6 +40,11 @@ export async function setMessages({
 		}
 
 		await pipeline.exec();
+
+		// Update chat metadata with last message time
+		await updateChatMetadata(chatId, {
+			lastMessageAt: new Date().toISOString(),
+		});
 	} catch (error) {
 		console.error("Error saving messages to Redis:", error);
 		// We may need to retry this operation

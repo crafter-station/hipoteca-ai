@@ -7,33 +7,55 @@ import {
 	streamText,
 } from "ai";
 
+import { generateUserId } from "@/lib/user-identification";
 import { getMessages, setMessages } from "@/redis";
+import { isChatOwnedByUser } from "@/redis/chat-management";
 import { searchQuestions } from "@/tools/search-questions";
 
 interface ChatRequest {
 	message: Message;
-	id: string;
+	chat_id: string;
 }
 
 export async function POST(req: Request) {
 	try {
 		const body = (await req.json()) as ChatRequest;
-		const { message: rawMessage, id } = body;
+		const { message: rawMessage, chat_id } = body;
 		const message = {
 			...rawMessage,
 			createdAt: new Date(rawMessage.createdAt ?? new Date().toISOString()),
 		};
 
+		// Generate user ID from request headers
+		const userId = generateUserId({
+			"x-forwarded-for": req.headers.get("x-forwarded-for") || undefined,
+			"user-agent": req.headers.get("user-agent") || undefined,
+			"accept-language": req.headers.get("accept-language") || undefined,
+			"sec-ch-ua": req.headers.get("sec-ch-ua") || undefined,
+			"sec-ch-ua-platform": req.headers.get("sec-ch-ua-platform") || undefined,
+		});
+
 		// Validate required fields
-		if (!message || !id) {
+		if (!message || !chat_id) {
 			return new Response(
-				JSON.stringify({ error: "Missing required fields: message and id" }),
+				JSON.stringify({
+					error: "Missing required fields: message and chat_id",
+				}),
 				{ status: 400, headers: { "Content-Type": "application/json" } },
 			);
 		}
 
+		// Verify the chat belongs to the user
+		const isOwned = await isChatOwnedByUser(userId, chat_id);
+		if (!isOwned) {
+			return new Response(
+				JSON.stringify({ error: "Chat not found or access denied" }),
+				{ status: 404, headers: { "Content-Type": "application/json" } },
+			);
+		}
+
 		// Retrieve existing messages from Redis
-		const existingMessages = await getMessages(id);
+		const existingMessages = await getMessages(chat_id);
 
 		const messages = appendClientMessage({
 			messages: existingMessages.toReversed(),
@@ -50,7 +72,7 @@ export async function POST(req: Request) {
 				});
 
 				await setMessages({
-					id,
+					chatId: chat_id,
 					originalMessages: existingMessages,
 					newMessages: updatedMessages,
 				});

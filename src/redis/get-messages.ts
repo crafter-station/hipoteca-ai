@@ -2,10 +2,10 @@ import type { Message } from "ai";
 
 import { redis } from "@/clients/redis";
 
-import { getChatKey } from "./keys";
+import { getChatMessagesKey } from "./keys";
 
-export async function getMessages(id: string): Promise<Message[]> {
-	const key = getChatKey(id);
+export async function getMessages(chatId: string): Promise<Message[]> {
+	const key = getChatMessagesKey(chatId);
 	const messagesData = await redis.lrange<Message>(key, 0, -1);
 
 	if (!messagesData || messagesData.length === 0) {
