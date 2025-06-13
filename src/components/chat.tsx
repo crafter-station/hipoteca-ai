@@ -4,6 +4,7 @@ import React from "react";
 
 import { useRouter } from "next/navigation";
 
+import { cn } from "@/lib/utils";
 import { type Message, useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createIdGenerator } from "ai";
@@ -60,11 +61,10 @@ export function Chat({
 							className="mb-2.5 border-gray-300 border-b border-dotted py-1.5 dark:border-gray-700"
 						>
 							<span
-								className={
-									m.role === "user"
-										? "text-blue-700 dark:text-cyan-400"
-										: "text-green-700 dark:text-green-400"
-								}
+								className={cn(
+									"text-blue-700 dark:text-cyan-400",
+									m.role === "user" && "text-green-700 dark:text-green-400",
+								)}
 							>
 								{m.role === "user" ? "user@terminal:~$ " : "ai@system:~$ "}
 							</span>
