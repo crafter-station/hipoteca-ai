@@ -18,6 +18,8 @@ export async function setMessages({
 
 		const pipeline = redis.pipeline();
 
+		let lastMessageCreatedAt: Date | undefined;
+
 		for (let i = 0; i < newMessages.length; i++) {
 			const newMessage = newMessages[i];
 			const existingMessage = originalMessages.find(
@@ -25,12 +27,15 @@ export async function setMessages({
 			);
 
 			if (!existingMessage) {
+				if (newMessage.role === "user") {
+					lastMessageCreatedAt = newMessage.createdAt;
+				} else if (lastMessageCreatedAt) {
+					lastMessageCreatedAt = new Date(Date.now() + 1000);
+				}
+
 				pipeline.lpush<Message>(key, {
 					...newMessage,
-					createdAt:
-						newMessage.role === "user"
-							? newMessage.createdAt
-							: new Date(Date.now() + 1000),
+					createdAt: lastMessageCreatedAt,
 				});
 			} else {
 				if (JSON.stringify(existingMessage) !== JSON.stringify(newMessage)) {
@@ -43,7 +48,7 @@ export async function setMessages({
 
 		// Update chat metadata with last message time
 		await updateChatMetadata(chatId, {
-			lastMessageAt: new Date().toISOString(),
+			lastMessageAt: lastMessageCreatedAt?.toISOString(),
 		});
 	} catch (error) {
 		console.error("Error saving messages to Redis:", error);

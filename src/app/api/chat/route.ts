@@ -4,12 +4,17 @@ import {
 	appendClientMessage,
 	appendResponseMessages,
 	createIdGenerator,
+	generateText,
 	streamText,
 } from "ai";
 
 import { generateUserId } from "@/lib/user-identification";
 import { getMessages, setMessages } from "@/redis";
-import { isChatOwnedByUser, listUserChats } from "@/redis/chat-management";
+import {
+	isChatOwnedByUser,
+	listUserChats,
+	updateChatMetadata,
+} from "@/redis/chat-management";
 import { searchQuestions } from "@/tools/search-questions";
 
 interface ChatRequest {
@@ -23,6 +28,23 @@ export async function GET(req: Request) {
 	const chats = await listUserChats(userId);
 
 	return Response.json(chats);
+}
+
+async function getChatTitle(messages: Message[]) {
+	const response = await generateText({
+		model: openai("gpt-4.1-nano"),
+		prompt: `Generate a title for the chat.
+			The title should be a single word or phrase that captures the essence of the chat.
+			The title should be no more than 10 words.
+			Do not include any other text in your response.
+
+			<Chat>
+				${messages.map((m) => `<Message role="${m.role}" createdAt="${m.createdAt?.toISOString()}" content="${m.content}">${m.content}</Message>`).join("\n")}
+			</Chat>`,
+		temperature: 0.1,
+	});
+
+	return response.text;
 }
 
 export async function POST(req: Request) {
@@ -78,6 +100,9 @@ export async function POST(req: Request) {
 					originalMessages: existingMessages,
 					newMessages: updatedMessages,
 				});
+
+				const title = await getChatTitle(updatedMessages);
+				await updateChatMetadata(chat_id, { title });
 			},
 			experimental_generateMessageId: createIdGenerator({
 				size: 16,

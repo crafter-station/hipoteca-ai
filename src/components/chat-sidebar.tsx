@@ -46,13 +46,8 @@ export function ChatSidebar() {
 							<div className="truncate font-medium text-gray-900">
 								{chat.title}
 							</div>
-							{chat.lastMessage && (
-								<div className="mt-1 truncate text-gray-500">
-									{chat.lastMessage}
-								</div>
-							)}
 							<div className="mt-1 text-gray-400 text-xs">
-								{new Date(chat.lastMessageAt).toLocaleDateString()}
+								{new Date(chat.lastMessageAt).toLocaleString()}
 							</div>
 						</Link>
 					))}
