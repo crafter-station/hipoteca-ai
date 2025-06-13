@@ -4,12 +4,14 @@ import { useRouter } from "next/navigation";
 import React from "react";
 
 import { type Message, useChat } from "@ai-sdk/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createIdGenerator } from "ai";
 
 export function Chat({
 	id,
 	initialMessages,
 }: { id?: string | undefined; initialMessages?: Message[] } = {}) {
+	const queryClient = useQueryClient();
 	const {
 		input,
 		handleInputChange,
@@ -27,6 +29,9 @@ export function Chat({
 		generateId: createIdGenerator({
 			size: 16,
 		}),
+		onFinish: () => {
+			queryClient.invalidateQueries({ queryKey: ["chats"] });
+		},
 	});
 
 	const router = useRouter();

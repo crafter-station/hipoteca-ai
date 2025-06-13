@@ -9,12 +9,20 @@ import {
 
 import { generateUserId } from "@/lib/user-identification";
 import { getMessages, setMessages } from "@/redis";
-import { isChatOwnedByUser } from "@/redis/chat-management";
+import { isChatOwnedByUser, listUserChats } from "@/redis/chat-management";
 import { searchQuestions } from "@/tools/search-questions";
 
 interface ChatRequest {
 	message: Message;
 	chat_id: string;
+}
+
+export async function GET(req: Request) {
+	const userId = generateUserId(getUserHeaders(req));
+
+	const chats = await listUserChats(userId);
+
+	return Response.json(chats);
 }
 
 export async function POST(req: Request) {
@@ -27,13 +35,7 @@ export async function POST(req: Request) {
 		};
 
 		// Generate user ID from request headers
-		const userId = generateUserId({
-			"x-forwarded-for": req.headers.get("x-forwarded-for") || undefined,
-			"user-agent": req.headers.get("user-agent") || undefined,
-			"accept-language": req.headers.get("accept-language") || undefined,
-			"sec-ch-ua": req.headers.get("sec-ch-ua") || undefined,
-			"sec-ch-ua-platform": req.headers.get("sec-ch-ua-platform") || undefined,
-		});
+		const userId = generateUserId(getUserHeaders(req));
 
 		// Validate required fields
 		if (!message || !chat_id) {
@@ -101,4 +103,14 @@ export async function POST(req: Request) {
 			{ status: 500, headers: { "Content-Type": "application/json" } },
 		);
 	}
+}
+
+function getUserHeaders(req: Request) {
+	return {
+		"x-forwarded-for": req.headers.get("x-forwarded-for") || undefined,
+		"user-agent": req.headers.get("user-agent") || undefined,
+		"accept-language": req.headers.get("accept-language") || undefined,
+		"sec-ch-ua": req.headers.get("sec-ch-ua") || undefined,
+		"sec-ch-ua-platform": req.headers.get("sec-ch-ua-platform") || undefined,
+	};
 }
