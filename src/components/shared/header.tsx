@@ -2,7 +2,9 @@
 
 import { SmoothScrollLink } from "@/components/landing/smooth-scroll-link";
 import { Button } from "@/components/ui/button";
+import { SignedOut } from "@clerk/clerk-react";
 import Link from "next/link";
+import { UserButton } from "../user-button";
 import { Logo } from "./logo";
 
 export function Header() {
@@ -41,19 +43,22 @@ export function Header() {
 			</nav>
 
 			<div className="flex flex-1 items-center justify-end gap-2">
-				<div className="flex gap-2">
-					<Button
-						variant="outline"
-						size="sm"
-						asChild
-						className="h-7 rounded-md px-3 text-sm"
-					>
-						<Link href="/dashboard">Sign In</Link>
-					</Button>
-					<Button size="sm" asChild className="h-7 rounded-md px-3 text-sm">
-						<Link href="/dashboard">Sign Up</Link>
-					</Button>
-				</div>
+				<SignedOut>
+					<div className="flex gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							asChild
+							className="h-7 rounded-md px-3 text-sm"
+						>
+							<Link href="/sign-in">Sign In</Link>
+						</Button>
+						<Button size="sm" asChild className="h-7 rounded-md px-3 text-sm">
+							<Link href="/sign-up">Sign Up</Link>
+						</Button>
+					</div>
+				</SignedOut>
+				<UserButton />
 			</div>
 		</header>
 	);
