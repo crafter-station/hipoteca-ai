@@ -44,10 +44,9 @@ export function Chat({
 		}
 	}, [status, id, chatId, router, messages.length]);
 
-	// simplified rendering code, extend as needed:
 	return (
-		<div className="min-h-screen border-2 border-gray-700 bg-black p-5 font-mono text-green-400">
-			<div className="mb-5 max-h-[70vh] overflow-y-auto border border-gray-700 bg-gray-900 p-2.5">
+		<div className="min-h-screen border-2 border-gray-300 bg-gray-50 p-5 font-mono text-gray-800 dark:border-green-700 dark:bg-black dark:text-green-400">
+			<div className="mb-5 max-h-[70vh] overflow-y-auto border border-gray-300 bg-white p-2.5 dark:border-gray-700 dark:bg-gray-900">
 				{messages
 					.toSorted(
 						(a, b) =>
@@ -57,11 +56,13 @@ export function Chat({
 					.map((m) => (
 						<div
 							key={m.id}
-							className="mb-2.5 border-gray-700 border-b border-dotted py-1.5"
+							className="mb-2.5 border-gray-300 border-b border-dotted py-1.5 dark:border-gray-700"
 						>
 							<span
 								className={
-									m.role === "user" ? "text-cyan-400" : "text-green-400"
+									m.role === "user"
+										? "text-blue-700 dark:text-cyan-400"
+										: "text-green-700 dark:text-green-400"
 								}
 							>
 								{m.role === "user" ? "user@terminal:~$ " : "ai@system:~$ "}
@@ -71,7 +72,7 @@ export function Chat({
 								.map(({ toolInvocation }) => (
 									<span
 										key={toolInvocation.toolCallId}
-										className="text-green-600"
+										className="text-green-600 dark:text-green-600"
 									>
 										{toolInvocation.toolName === "searchQuestions" ? (
 											<span>
@@ -89,11 +90,11 @@ export function Chat({
 
 			<form onSubmit={handleSubmit}>
 				<div className="flex items-center">
-					<span className="mr-2 text-cyan-400">&gt;</span>
+					<span className="mr-2 text-blue-700 dark:text-cyan-400">&gt;</span>
 					<input
 						value={input}
 						onChange={handleInputChange}
-						className="flex-1 border-none bg-transparent p-1.5 font-mono text-base text-green-400 outline-none"
+						className="flex-1 border-none bg-transparent p-1.5 font-mono text-base text-gray-800 outline-none dark:text-green-400"
 						placeholder="Type your message..."
 					/>
 				</div>

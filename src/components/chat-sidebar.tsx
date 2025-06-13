@@ -6,10 +6,6 @@ import { PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-interface ChatSidebarProps {
-	chats: ChatSummary[];
-}
-
 export function ChatSidebar() {
 	const params = useParams<{ id: string }>();
 	const currentChatId = params.id;
@@ -27,19 +23,20 @@ export function ChatSidebar() {
 	});
 
 	return (
-		<div className="flex h-screen w-64 flex-col border-gray-200 border-r bg-gray-50">
+		<div className="flex h-screen w-64 flex-col border-gray-200 border-green-700 border-r bg-black bg-gray-50 font-mono dark:border-green-700 dark:bg-black dark:font-mono">
 			{/* New Chat Button */}
-			<div className="border-gray-200 border-b p-4">
+			<div className="border-gray-200 border-green-700 border-b bg-gray-50 p-4 dark:border-green-700 dark:bg-black">
 				<Link
 					href="/chat"
-					className={`flex items-center gap-2 rounded-lg px-4 py-2 font-medium text-sm transition-colors ${
+					className={`flex items-center gap-2 rounded border px-4 py-2 font-bold text-sm transition-colors shadow-sm${
 						isNewChat
-							? "bg-blue-600 text-white"
-							: "bg-blue-600 text-white hover:bg-blue-700"
-					}`}
+							? "border-cyan-400 bg-black text-cyan-300 dark:border-cyan-400 dark:bg-black dark:text-cyan-300"
+							: "border-green-300 bg-green-100 text-green-700 hover:bg-green-200 hover:text-cyan-700 dark:border-green-700 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 dark:hover:text-cyan-300"
+					}
+					`}
 				>
-					<PlusCircle className="h-4 w-4" />
-					New Chat
+					<PlusCircle className="h-4 w-4 text-cyan-300 dark:text-cyan-300" />
+					<span>&gt; New Chat</span>
 				</Link>
 			</div>
 
@@ -52,23 +49,20 @@ export function ChatSidebar() {
 							<Link
 								key={chat.id}
 								href={`/chat/${chat.id}`}
-								className={`mb-2 block rounded-lg p-3 text-sm transition-colors ${
+								className={`mb-2 block rounded border p-3 text-sm transition-colors font-mono${
 									isActive
-										? "border border-blue-200 bg-blue-50"
-										: "hover:bg-gray-100"
-								}`}
+										? "border-cyan-400 bg-green-50 text-cyan-700 dark:border-cyan-400 dark:bg-green-950 dark:text-cyan-300"
+										: "border-green-300 bg-white text-green-700 hover:bg-green-100 hover:text-cyan-700 dark:border-green-700 dark:bg-black dark:text-green-300 dark:hover:bg-green-900 dark:hover:text-cyan-300"
+								}
+								`}
 							>
 								<div
-									className={`truncate font-medium ${
-										isActive ? "text-blue-700" : "text-gray-900"
-									}`}
+									className={`truncate font-bold ${isActive ? "text-cyan-700 dark:text-cyan-300" : "text-green-700 dark:text-green-300"}`}
 								>
 									{chat.title}
 								</div>
 								<div
-									className={`mt-1 text-xs ${
-										isActive ? "text-blue-500" : "text-gray-400"
-									}`}
+									className={`mt-1 text-xs ${isActive ? "text-cyan-500 dark:text-cyan-200" : "text-green-500 dark:text-green-500"}`}
 								>
 									{new Date(chat.lastMessageAt).toLocaleString()}
 								</div>
