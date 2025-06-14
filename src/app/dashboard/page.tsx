@@ -1,5 +1,6 @@
 "use client";
 
+import { processPDF } from "@/actions/process-pdf";
 import { ChatPanel } from "@/components/shared/chat-panel";
 import { Header } from "@/components/shared/header";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { uploadFiles } from "@/lib/uploadthing";
 import {
 	FileText,
 	PanelRightClose,
@@ -26,12 +28,22 @@ export default function DashboardPage() {
 	const [isPanelOpen, setIsPanelOpen] = useState(true);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
-	const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+	const handleFileUpload = async (
+		event: React.ChangeEvent<HTMLInputElement>,
+	) => {
 		const file = event.target.files?.[0];
 		if (file && file.type === "application/pdf") {
 			setUploadedFile(file);
-			const url = URL.createObjectURL(file);
-			setPdfUrl(url);
+			const [{ ufsUrl, name }] = await uploadFiles("documentUploader", {
+				files: [file],
+				onUploadProgress: ({ file, progress }) => {
+					console.log("Processing file", "progress", progress);
+				},
+			});
+
+			await processPDF(ufsUrl, name);
+
+			setPdfUrl(ufsUrl);
 		}
 	};
 
