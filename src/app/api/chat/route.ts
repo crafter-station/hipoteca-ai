@@ -22,6 +22,7 @@ import {
 } from "@/redis/chat-management";
 import { createSearchContractContextTool } from "@/tools/search-contract-context";
 import { createSearchMortgageKnowledgeTool } from "@/tools/search-mortgage-knowledge";
+import { getTracer } from "@lmnr-ai/lmnr";
 
 interface ChatRequest {
 	message: Message;
@@ -123,6 +124,10 @@ export async function POST(req: Request) {
 				),
 			},
 			maxSteps: 10,
+			experimental_telemetry: {
+				isEnabled: true,
+				tracer: getTracer(),
+			},
 		});
 
 		// consume the stream to ensure it runs to completion & triggers onFinish
