@@ -67,7 +67,7 @@ export const createSearchMortgageKnowledgeTool = (documentId: string) =>
 				return `<mortgage-knowledge>\n${allChunks
 					.map(
 						({ properties: { chunkIndex, content, pageIndex } }) =>
-							`  <chunk>\n    <chunkIndex>${chunkIndex}</chunkIndex>\n    <content>${content}</content>\n    <pageNumber>${pageIndex}</pageNumber>\n  </chunk>`,
+							`  <chunk>\n    <chunkIndex>${chunkIndex}</chunkIndex>\n    <content>${content}</content>\n    <pageNumber>${pageIndex + 1}</pageNumber>\n  </chunk>`,
 					)
 					.join("\n")}\n</mortgage-knowledge>`;
 			} catch (error) {

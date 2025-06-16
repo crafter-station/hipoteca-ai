@@ -9,6 +9,101 @@ import { type Message, useChat } from "@ai-sdk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { createIdGenerator } from "ai";
 
+interface Source {
+	name: string;
+	pages: number[];
+}
+
+function parseSources(content: string): { text: string; sources: Source[] } {
+	const sourcesMatch = content.match(/<sources>([\s\S]*?)<\/sources>/);
+	if (!sourcesMatch) return { text: content, sources: [] };
+
+	const text = content.replace(sourcesMatch[0], "").trim();
+	const sourcesXml = sourcesMatch[1];
+	const sources: Source[] = [];
+
+	const sourceMatches = sourcesXml.matchAll(/<source>([\s\S]*?)<\/source>/g);
+	for (const match of sourceMatches) {
+		const sourceXml = match[1];
+		const nameMatch = sourceXml.match(/<name>([\s\S]*?)<\/name>/);
+		const pagesMatch = sourceXml.match(/<pages>([\s\S]*?)<\/pages>/);
+
+		if (nameMatch && pagesMatch) {
+			const pages =
+				pagesMatch[1]
+					.match(/<page>(\d+)<\/page>/g)
+					?.map((p) =>
+						Number.parseInt(p.replace(/<page>(\d+)<\/page>/, "$1"), 10),
+					) || [];
+
+			sources.push({
+				name: nameMatch[1].trim(),
+				pages,
+			});
+		}
+	}
+
+	return { text, sources };
+}
+
+function Sources({ sources }: { sources: Source[] }) {
+	if (sources.length === 0) return null;
+
+	// URLs for the sources
+	const mortgagePdf =
+		"https://www.bde.es/f/webbde/Secciones/Publicaciones/Folletos/Fic/Guia_hipotecaria_2013.pdf";
+	const contractDoc =
+		"https://o6dbw19iyd.ufs.sh/f/dgFwWFXCXZVhT5Loy8B7YUFvSi8RlzkwVJnbZ6ypt93rXGOs";
+
+	return (
+		<div className="mt-2 border border-gray-500 border-dotted bg-transparent p-2 font-mono text-gray-800 text-xs dark:border-green-700 dark:text-green-400">
+			<div className="mb-1 font-bold text-gray-700 text-xs uppercase tracking-widest dark:text-green-400">
+				References
+			</div>
+			<div className="space-y-1">
+				{sources.map((source) => {
+					let link: string | null = null;
+					if (source.name === "Mortgage Knowledge" && source.pages.length > 0) {
+						link = `${mortgagePdf}#page=${source.pages[0]}`;
+					} else if (source.name === "Contract Context") {
+						link = `${contractDoc}#page=${source.pages[0]}`;
+					}
+					return (
+						<div
+							key={`${source.name}-${source.pages.join("-")}`}
+							className="flex items-baseline gap-2"
+						>
+							<span className="inline-block min-w-[1.5em] text-center font-bold text-green-700 dark:text-green-400">
+								{sources.indexOf(source) + 1}.
+							</span>
+							<span className="flex items-center gap-1 text-gray-800 text-xs dark:text-green-400">
+								{source.name}
+								{link && (
+									<a
+										href={link}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="ml-1 text-green-700 hover:underline dark:text-green-400"
+										title="Open reference document"
+									>
+										{/* Unicode link icon for retro look */}
+										<span style={{ fontSize: "1em", verticalAlign: "middle" }}>
+											🔗
+										</span>
+									</a>
+								)}
+							</span>
+							<span className="ml-2 text-[0.9em] text-gray-500 dark:text-green-700">
+								Pages: {source.pages.join(", ")}
+							</span>
+						</div>
+					);
+				})}
+			</div>
+		</div>
+	);
+}
+
 export function Chat({
 	id,
 	initialMessages,
@@ -94,7 +189,15 @@ export function Chat({
 										{index !== m.parts.length - 1 && <br />}
 									</p>
 								))}
-							{m.content}
+							{(() => {
+								const { text, sources } = parseSources(m.content);
+								return (
+									<>
+										{text}
+										<Sources sources={sources} />
+									</>
+								);
+							})()}
 						</div>
 					))}
 			</div>
