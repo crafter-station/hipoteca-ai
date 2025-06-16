@@ -28,8 +28,6 @@ export function generateUserId(headers: RequestHeaders): string {
 	// Combine all identifiers into a single string, including the secret key
 	const combinedString = `${ip}|${userAgent}|${acceptLanguage}|${browserInfo}|${platform}|${SECRET_KEY}`;
 
-	console.log(combinedString);
-
 	// Create and return the full SHA-256 hash
 	return createHash("sha256").update(combinedString).digest("hex");
 }

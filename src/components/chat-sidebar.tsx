@@ -39,7 +39,7 @@ export function ChatSidebar() {
 					`}
 				>
 					<PlusCircle className="h-4 w-4 text-cyan-300 dark:text-cyan-300" />
-					<span>&gt; New Chat</span>
+					<span>&gt; Nuevo Chat</span>
 				</Link>
 			</div>
 

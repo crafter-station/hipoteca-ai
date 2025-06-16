@@ -1,9 +1,9 @@
 import { nanoid } from "@/lib/nanoid";
-import { type Mortgage, saveMortgage } from "@/models/mortgage";
+import { type Contract, saveContract } from "@/models/contract";
 import { logger, schemaTask } from "@trigger.dev/sdk/v3";
 import { z } from "zod";
 import { extractContentFromPdf } from "./extract-content";
-import { fillKnowledge } from "./fill-knowledge";
+import { storeContractContext } from "./store-contract-context";
 
 export const processPDFTask = schemaTask({
 	id: "process-pdf-task",
@@ -22,7 +22,7 @@ export const processPDFTask = schemaTask({
 			logger.info("extracting content from pdf");
 			const { markdown, html, chunks } = await extractContentFromPdf(fileUrl);
 
-			const mortgage: Mortgage = {
+			const document: Contract = {
 				id: nanoid(),
 				userId: userId,
 				pdfUrl: fileUrl,
@@ -32,15 +32,19 @@ export const processPDFTask = schemaTask({
 				createdAt: new Date(),
 			};
 
-			logger.info("saving mortgage", { id: mortgage.id });
-			await saveMortgage(mortgage);
-			logger.info("mortgage saved successfully");
+			logger.info("saving contract", { id: document.id });
+			await saveContract(document);
+			logger.info("contract saved successfully in redis");
 
-			logger.info("filling knowledge database");
+			logger.info("storing contract context");
 
-			const result = await fillKnowledge(chunks, mortgage.id);
+			const result = await storeContractContext(chunks, document.id);
 
-			logger.info("database knowledge filled successfully", { result });
+			logger.info("contract context stored successfully in weaviate", {
+				result,
+			});
+
+			logger.info("process pdf task finished");
 		} catch (error) {
 			logger.error("process pdf task failed", {
 				error,
