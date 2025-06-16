@@ -15,7 +15,7 @@ import {
 	listUserChats,
 	updateChatMetadata,
 } from "@/redis/chat-management";
-import { searchQuestions } from "@/tools/search-questions";
+import { createSearchContractContextTool } from "@/tools/search-contract-context";
 
 interface ChatRequest {
 	message: Message;
@@ -46,6 +46,8 @@ async function getChatTitle(messages: Message[]) {
 
 	return response.text;
 }
+
+const mortgageId = "e4nSYbFfrABJ";
 
 export async function POST(req: Request) {
 	try {
@@ -88,6 +90,8 @@ export async function POST(req: Request) {
 
 		const result = streamText({
 			model: openai("gpt-4.1-nano"),
+			system: `You are a helpful assistant that can answer questions about mortgage contracts.
+			You can use the searchContractContext tool to get information about the contract of the user.`,
 			messages,
 			async onFinish({ response }) {
 				const updatedMessages = appendResponseMessages({
@@ -108,7 +112,7 @@ export async function POST(req: Request) {
 				size: 16,
 			}),
 			tools: {
-				searchQuestions,
+				searchContractContext: createSearchContractContextTool(mortgageId),
 			},
 			maxSteps: 10,
 		});

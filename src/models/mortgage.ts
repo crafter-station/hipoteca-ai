@@ -12,7 +12,15 @@ export interface Mortgage {
 
 export interface MortgageChunk {
 	content: string;
+	pageIndex: number;
 }
+
+export type MortgageKnowledge = Readonly<{
+	pageIndex: number;
+	content: string;
+	chunkIndex: number;
+	mortgageId: string;
+}>;
 
 export async function saveMortgage(mortgage: Mortgage) {
 	try {

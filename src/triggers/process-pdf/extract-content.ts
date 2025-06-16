@@ -1,16 +1,23 @@
 import { mistral } from "@/clients/mistral";
+import type { MortgageChunk } from "@/models/mortgage";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 
 export async function extractContentFromPdf(fileUrl: string) {
 	try {
-		const text = await getTextFromPdf(fileUrl);
-		const texts = splitTextIntoSemanticChunks(text, 1000);
-		const html = await generateHtmlFromText(texts);
+		const { markdown, pages } = await getTextFromPdf(fileUrl);
+		const chunks = splitTextIntoSemanticChunks(
+			pages.map((page) => ({
+				pageContent: page.markdown,
+				pageIndex: page.index,
+			})),
+			1000,
+		);
+		const html = await generateHtmlFromText(chunks);
 
 		return {
-			markdown: text,
-			chunks: texts,
+			markdown,
+			chunks,
 			html,
 		};
 	} catch (error) {
@@ -37,14 +44,19 @@ async function getTextFromPdf(fileUrl: string) {
 		includeImageBase64: false,
 	});
 
-	return resp.pages
-		.toSorted((a, b) => a.index - b.index)
-		.map((page) => page.markdown)
-		.join("\n");
+	return {
+		markdown: resp.pages
+			.toSorted((a, b) => a.index - b.index)
+			.map((page) => page.markdown)
+			.join("\n"),
+		pages: resp.pages,
+	};
 }
 
-async function generateHtmlFromText(texts: string[]) {
-	const htmlResponses = await processInParallel(texts, (t) =>
+async function generateHtmlFromText(
+	chunks: { content: string; pageIndex: number }[],
+) {
+	const htmlResponses = await processInParallel(chunks, (t) =>
 		generateText({
 			model: openai("gpt-4o-mini"),
 			prompt: `Convert this markdown text into a more structured one, that could be a HTML. You should focus on putting the right tags. The text: ${t}. You should return only the HTML without \`\`\`html \`\`\``,
@@ -57,42 +69,56 @@ async function generateHtmlFromText(texts: string[]) {
 	return `<main>${content}</main>`;
 }
 
-function splitTextIntoSemanticChunks(text: string, maxLen: number): string[] {
-	// 1. Split the text into sentences
-	const sentences =
-		text
-			.match(/[^.!?]+[.!?]+[\])'"`’”]*|\s*$/g)
-			?.map((s) => s.trim())
-			.filter(Boolean) || [];
+function splitTextIntoSemanticChunks(
+	pages: { pageContent: string; pageIndex: number }[],
+	maxLen: number,
+): MortgageChunk[] {
+	const chunks: MortgageChunk[] = [];
 
-	const chunks: string[] = [];
-	let buffer = "";
+	for (const page of pages) {
+		// 1. Split the text into sentences
+		const sentences =
+			page.pageContent
+				.match(/[^.!?]+[.!?]+[\])'"`’”]*|\s*$/g)
+				?.map((s) => s.trim())
+				.filter(Boolean) || [];
 
-	for (const sentence of sentences) {
-		// If adding this sentence exceeds the limit:
-		if (`${buffer} ${sentence}`.length > maxLen) {
-			if (buffer) {
-				chunks.push(buffer.trim());
-				buffer = "";
-			}
-			// If the sentence itself exceeds the limit, split it into parts
-			if (sentence.length > maxLen) {
-				let start = 0;
-				while (start < sentence.length) {
-					const part = sentence.slice(start, start + maxLen);
-					chunks.push(part);
-					start += maxLen;
+		let buffer = "";
+
+		for (const sentence of sentences) {
+			// If adding this sentence exceeds the limit:
+			if (`${buffer} ${sentence}`.length > maxLen) {
+				if (buffer) {
+					chunks.push({
+						content: buffer.trim(),
+						pageIndex: page.pageIndex,
+					});
+					buffer = "";
 				}
-				continue;
+				// If the sentence itself exceeds the limit, split it into parts
+				if (sentence.length > maxLen) {
+					let start = 0;
+					while (start < sentence.length) {
+						const part = sentence.slice(start, start + maxLen);
+						chunks.push({
+							content: part,
+							pageIndex: page.pageIndex,
+						});
+						start += maxLen;
+					}
+					continue;
+				}
 			}
+			// If it fits, add it to the buffer
+			buffer = buffer ? `${buffer} ${sentence}` : sentence;
 		}
-		// If it fits, add it to the buffer
-		buffer = buffer ? `${buffer} ${sentence}` : sentence;
-	}
 
-	if (buffer) {
-		chunks.push(buffer.trim());
+		if (buffer) {
+			chunks.push({
+				content: buffer.trim(),
+				pageIndex: page.pageIndex,
+			});
+		}
 	}
-
 	return chunks;
 }
