@@ -77,7 +77,9 @@ function Sources({ sources }: { sources: Source[] }) {
 								{sources.indexOf(source) + 1}.
 							</span>
 							<span className="flex items-center gap-1 text-gray-800 text-xs dark:text-green-400">
-								{source.name}
+								{source.name === "Mortgage Knowledge"
+									? "Guía Hipotecaria del Banco de España"
+									: "Tu contrato hipotecario"}
 								{link && (
 									<a
 										href={link}
@@ -94,7 +96,7 @@ function Sources({ sources }: { sources: Source[] }) {
 								)}
 							</span>
 							<span className="ml-2 text-[0.9em] text-gray-500 dark:text-green-700">
-								Pages: {source.pages.join(", ")}
+								Páginas: {source.pages.join(", ")}
 							</span>
 						</div>
 					);
@@ -161,7 +163,7 @@ export function Chat({
 									m.role === "user" && "text-green-700 dark:text-green-400",
 								)}
 							>
-								{m.role === "user" ? "user@terminal:~$ " : "ai@system:~$ "}
+								{m.role === "user" ? "user@terminal:~$ " : "hipo@scannr:~$ "}
 							</span>
 							{m.parts
 								.filter((p) => p.type === "tool-invocation")
@@ -173,7 +175,7 @@ export function Chat({
 										{toolInvocation.toolName === "searchContractContext" ? (
 											<>
 												<span>
-													Searching contract information for "
+													Buscando información sobre tu contrato para "
 													{toolInvocation.args.query}"
 												</span>
 											</>
@@ -181,7 +183,7 @@ export function Chat({
 											"searchMortgageKnowledge" ? (
 											<>
 												<span>
-													Searching mortgage knowledge for "
+													Buscando información oficial sobre hipotecas para "
 													{toolInvocation.args.query}"
 												</span>
 											</>
@@ -209,7 +211,7 @@ export function Chat({
 						value={input}
 						onChange={handleInputChange}
 						className="flex-1 border-none bg-transparent p-1.5 font-mono text-base text-gray-800 outline-none dark:text-green-400"
-						placeholder="Type your message..."
+						placeholder="Escribe tu mensaje..."
 					/>
 				</div>
 			</form>
