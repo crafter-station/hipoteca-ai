@@ -9,6 +9,10 @@ import {
 } from "ai";
 
 import { generateUserId } from "@/lib/user-identification";
+import {
+	CONTRACT_CONTEXT_DOCUMENT_ID,
+	MORTGAGE_KNOWLEDGE_DOCUMENT_ID,
+} from "@/models/constants";
 import { getMessages, setMessages } from "@/redis";
 import {
 	isChatOwnedByUser,
@@ -16,6 +20,7 @@ import {
 	updateChatMetadata,
 } from "@/redis/chat-management";
 import { createSearchContractContextTool } from "@/tools/search-contract-context";
+import { createSearchMortgageKnowledgeTool } from "@/tools/search-mortgage-knowledge";
 
 interface ChatRequest {
 	message: Message;
@@ -46,8 +51,6 @@ async function getChatTitle(messages: Message[]) {
 
 	return response.text;
 }
-
-const contractId = "e4nSYbFfrABJ";
 
 export async function POST(req: Request) {
 	try {
@@ -91,7 +94,9 @@ export async function POST(req: Request) {
 		const result = streamText({
 			model: openai("gpt-4.1-nano"),
 			system: `You are a helpful assistant that can answer questions about mortgage contracts.
-			You can use the searchContractContext tool to get information about the contract of the user.`,
+			You can use the searchContractContext tool to get information about the specific contract of the user.
+			You can use the searchMortgageKnowledge tool to get reliable knowledge about mortgages such as definitions, laws, etc.
+			Mix both tools to answer the user's question.`,
 			messages,
 			async onFinish({ response }) {
 				const updatedMessages = appendResponseMessages({
@@ -112,7 +117,12 @@ export async function POST(req: Request) {
 				size: 16,
 			}),
 			tools: {
-				searchContractContext: createSearchContractContextTool(contractId),
+				searchContractContext: createSearchContractContextTool(
+					CONTRACT_CONTEXT_DOCUMENT_ID,
+				),
+				searchMortgageKnowledge: createSearchMortgageKnowledgeTool(
+					MORTGAGE_KNOWLEDGE_DOCUMENT_ID,
+				),
 			},
 			maxSteps: 10,
 		});

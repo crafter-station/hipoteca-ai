@@ -69,7 +69,7 @@ async function generateHtmlFromText(
 	return `<main>${content}</main>`;
 }
 
-function splitTextIntoSemanticChunks(
+export function splitTextIntoSemanticChunks(
 	pages: { pageContent: string; pageIndex: number }[],
 	maxLen: number,
 ): ContractContextChunk[] {

@@ -70,21 +70,30 @@ export function Chat({
 							</span>
 							{m.parts
 								.filter((p) => p.type === "tool-invocation")
-								.map(({ toolInvocation }) => (
-									<span
+								.map(({ toolInvocation }, index) => (
+									<p
 										key={toolInvocation.toolCallId}
 										className="text-green-600 dark:text-green-600"
 									>
 										{toolInvocation.toolName === "searchContractContext" ? (
-											<span>
-												Searching contract information for "
-												{toolInvocation.args.query}"
-											</span>
+											<>
+												<span>
+													Searching contract information for "
+													{toolInvocation.args.query}"
+												</span>
+											</>
+										) : toolInvocation.toolName ===
+											"searchMortgageKnowledge" ? (
+											<>
+												<span>
+													Searching mortgage knowledge for "
+													{toolInvocation.args.query}"
+												</span>
+											</>
 										) : null}
-									</span>
+										{index !== m.parts.length - 1 && <br />}
+									</p>
 								))}
-							<br />
-
 							{m.content}
 						</div>
 					))}
