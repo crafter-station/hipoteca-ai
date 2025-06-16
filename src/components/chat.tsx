@@ -75,9 +75,9 @@ export function Chat({
 										key={toolInvocation.toolCallId}
 										className="text-green-600 dark:text-green-600"
 									>
-										{toolInvocation.toolName === "searchQuestions" ? (
+										{toolInvocation.toolName === "searchContractContext" ? (
 											<span>
-												Searching questions for "{toolInvocation.args.query}"
+												Searching knowledge for "{toolInvocation.args.query}"
 											</span>
 										) : null}
 									</span>

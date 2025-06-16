@@ -37,9 +37,8 @@ export const processPDFTask = schemaTask({
 			logger.info("mortgage saved successfully");
 
 			logger.info("filling knowledge database");
-			const result = await fillKnowledge(
-				chunks.map((chunk) => ({ content: chunk })),
-			);
+
+			const result = await fillKnowledge(chunks, mortgage.id);
 
 			logger.info("database knowledge filled successfully", { result });
 		} catch (error) {
