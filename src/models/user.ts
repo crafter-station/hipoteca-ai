@@ -1,8 +1,9 @@
 import { redis } from "@/clients/redis";
+import { getUserContractsKey } from "./constants";
 
-export async function getUserFilesUrls(userId: string): Promise<string[]> {
+export async function getUserContractsUrls(userId: string): Promise<string[]> {
 	try {
-		const key = `user:${userId}:files`;
+		const key = getUserContractsKey(userId);
 		const urls = await redis.smembers(key);
 		return urls;
 	} catch (error) {

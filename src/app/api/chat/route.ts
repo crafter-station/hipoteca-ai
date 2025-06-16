@@ -47,7 +47,7 @@ async function getChatTitle(messages: Message[]) {
 	return response.text;
 }
 
-const mortgageId = "e4nSYbFfrABJ";
+const contractId = "e4nSYbFfrABJ";
 
 export async function POST(req: Request) {
 	try {
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
 				size: 16,
 			}),
 			tools: {
-				searchContractContext: createSearchContractContextTool(mortgageId),
+				searchContractContext: createSearchContractContextTool(contractId),
 			},
 			maxSteps: 10,
 		});

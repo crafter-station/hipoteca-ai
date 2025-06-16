@@ -1,5 +1,5 @@
 import { mistral } from "@/clients/mistral";
-import type { MortgageChunk } from "@/models/mortgage";
+import type { ContractContextChunk } from "@/models/contract-context";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
 
@@ -72,8 +72,8 @@ async function generateHtmlFromText(
 function splitTextIntoSemanticChunks(
 	pages: { pageContent: string; pageIndex: number }[],
 	maxLen: number,
-): MortgageChunk[] {
-	const chunks: MortgageChunk[] = [];
+): ContractContextChunk[] {
+	const chunks: ContractContextChunk[] = [];
 
 	for (const page of pages) {
 		// 1. Split the text into sentences

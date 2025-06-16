@@ -77,7 +77,8 @@ export function Chat({
 									>
 										{toolInvocation.toolName === "searchContractContext" ? (
 											<span>
-												Searching knowledge for "{toolInvocation.args.query}"
+												Searching contract information for "
+												{toolInvocation.args.query}"
 											</span>
 										) : null}
 									</span>

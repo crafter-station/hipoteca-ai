@@ -5,7 +5,7 @@ export interface ContractContextChunk {
 
 export type ContractContext = Readonly<{
 	content: string;
-	mortgageId: string;
+	documentId: string;
 	pageIndex: number;
 	chunkIndex: number;
 }>;

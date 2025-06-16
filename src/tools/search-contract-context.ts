@@ -6,7 +6,7 @@ import { CONTRACT_CONTEXT_COLLECTION } from "@/models/constants";
 import type { ContractContext } from "@/models/contract-context";
 import { Filters } from "weaviate-client";
 
-export const createSearchContractContextTool = (mortgageId: string) =>
+export const createSearchContractContextTool = (documentId: string) =>
 	tool({
 		description: `Retrieve contract context. It's a list of chunks of text from the contract. 
 		Whenever you need information about the user's mortgage, you can use this tool.
@@ -26,8 +26,8 @@ export const createSearchContractContextTool = (mortgageId: string) =>
 					await contractContextCollection.query.nearText(query, {
 						limit: 3,
 						filters: contractContextCollection.filter
-							.byProperty("mortgageId")
-							.equal(mortgageId),
+							.byProperty("documentId")
+							.equal(documentId),
 					});
 
 				// Calculate adjacent chunk indexes efficiently
@@ -44,8 +44,8 @@ export const createSearchContractContextTool = (mortgageId: string) =>
 						? await contractContextCollection.query.nearText(query, {
 								filters: Filters.and(
 									contractContextCollection.filter
-										.byProperty("mortgageId")
-										.equal(mortgageId),
+										.byProperty("documentId")
+										.equal(documentId),
 									Filters.or(
 										...Array.from(extraChunkIndexes).map((chunkIndex) =>
 											contractContextCollection.filter

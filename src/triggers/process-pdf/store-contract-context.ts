@@ -1,11 +1,13 @@
 import { weaviate } from "@/clients/weaviate";
 import { CONTRACT_CONTEXT_COLLECTION } from "@/models/constants";
-import type { ContractContext } from "@/models/contract-context";
-import type { MortgageChunk } from "@/models/mortgage";
+import type {
+	ContractContext,
+	ContractContextChunk,
+} from "@/models/contract-context";
 
-export async function fillKnowledge(
-	chunks: MortgageChunk[],
-	mortgageId: string,
+export async function storeContractContext(
+	chunks: ContractContextChunk[],
+	documentId: string,
 ) {
 	const contractContextCollection = weaviate.collections.get<ContractContext>(
 		CONTRACT_CONTEXT_COLLECTION,
@@ -17,7 +19,7 @@ export async function fillKnowledge(
 				pageIndex: chunk.pageIndex,
 				content: chunk.content,
 				chunkIndex: index,
-				mortgageId,
+				documentId,
 			},
 		})),
 	);
