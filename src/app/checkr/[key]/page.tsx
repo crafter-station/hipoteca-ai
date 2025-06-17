@@ -7,16 +7,10 @@ import { PdfViewer } from "@/components/shared/pdf-viewer";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { Contract } from "@/models/contract";
 import { useRealtimeRun } from "@trigger.dev/react-hooks";
-import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  FileText,
-  Loader2,
-  X,
-} from "lucide-react";
+import { AlertCircle, CheckCircle, FileText, Loader2, X } from "lucide-react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface PDFData {
   name: string;
@@ -74,6 +68,7 @@ function CheckrAnalysisContent() {
 
   const [pdfData, setPdfData] = useState<PDFData | null>(null);
   const [contract, setContract] = useState<Contract | null>(null);
+  console.log({ contract });
 
   // Use the useRealtimeRun hook for real-time updates
   const { run, error } = useRealtimeRun(runId || "");
@@ -106,7 +101,6 @@ function CheckrAnalysisContent() {
   // Handle run updates
   useEffect(() => {
     if (!run) return;
-    console.log("Run update:", { run });
 
     console.log("Run update:", {
       id: run.id,
@@ -116,7 +110,75 @@ function CheckrAnalysisContent() {
       progress: run.metadata?.progress,
     });
 
+    // Show toast notifications for all important status changes
+    if (run.status === "QUEUED") {
+      toast.info("⏳ Tarea en cola, esperando procesamiento...", {
+        id: "queued",
+        duration: 2000,
+      });
+    }
+
+    if (run.status === "EXECUTING" && run.metadata?.progress) {
+      const progressMessages = {
+        extract_content: "📄 Extrayendo contenido del PDF...",
+        extract_highlights: "🔍 Analizando cláusulas importantes...",
+        store_contract_context: "💾 Guardando análisis...",
+        completed: "✅ Análisis completado",
+      };
+
+      const message =
+        progressMessages[
+          run.metadata.progress as keyof typeof progressMessages
+        ];
+      if (message) {
+        toast.info(message, {
+          id: `progress-${run.metadata.progress}`, // Prevent duplicate toasts
+          duration: 3000,
+        });
+      }
+    }
+
+    if (run.status === "REATTEMPTING") {
+      toast.warning("🔄 Reintentando...", {
+        id: "reattempting",
+        duration: 2000,
+      });
+    }
+
+    if (run.status === "CANCELED") {
+      toast.error("🚫 Procesamiento cancelado", {
+        id: "canceled",
+        duration: 4000,
+      });
+    }
+
+    if (run.status === "FAILED") {
+      toast.error("❌ Error procesando el contrato", {
+        id: "failed",
+        duration: 5000,
+      });
+    }
+
+    if (run.status === "TIMED_OUT") {
+      toast.error("⏰ Procesamiento agotó el tiempo límite", {
+        id: "timed_out",
+        duration: 5000,
+      });
+    }
+
+    if (run.status === "CRASHED") {
+      toast.error("💥 Error crítico en el procesamiento", {
+        id: "crashed",
+        duration: 5000,
+      });
+    }
+
     if (run.status === "COMPLETED" && run.output?.contractId) {
+      toast.success("🎉 ¡Contrato procesado exitosamente!", {
+        id: "completed",
+        duration: 4000,
+      });
+
       // Fetch the processed contract
       getProcessedContract(run.output.contractId as string)
         .then((contractData) => {
@@ -136,6 +198,7 @@ function CheckrAnalysisContent() {
         })
         .catch((error) => {
           console.error("Error fetching contract:", error);
+          toast.error("Error cargando el contrato procesado");
         });
     }
   }, [run]);
@@ -245,17 +308,66 @@ function CheckrAnalysisContent() {
             <div className="flex h-full flex-col gap-4">
               {/* PDF Header */}
               <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 p-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-red-100">
-                  <FileText className="h-5 w-5 text-red-600" />
+                <div
+                  className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${
+                    status === "COMPLETED"
+                      ? "bg-green-100 dark:bg-green-900/30"
+                      : status === "FAILED" || status === "CRASHED"
+                        ? "bg-red-100 dark:bg-red-900/30"
+                        : status === "CANCELED"
+                          ? "bg-orange-100 dark:bg-orange-900/30"
+                          : status === "TIMED_OUT"
+                            ? "bg-yellow-100 dark:bg-yellow-900/30"
+                            : "bg-red-100 dark:bg-red-900/30"
+                  }`}
+                >
+                  <FileText
+                    className={`h-5 w-5 ${
+                      status === "COMPLETED"
+                        ? "text-green-600 dark:text-green-400"
+                        : status === "FAILED" || status === "CRASHED"
+                          ? "text-red-600 dark:text-red-400"
+                          : status === "CANCELED"
+                            ? "text-orange-600 dark:text-orange-400"
+                            : status === "TIMED_OUT"
+                              ? "text-yellow-600 dark:text-yellow-400"
+                              : "text-red-600 dark:text-red-400"
+                    }`}
+                  />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="truncate font-semibold text-foreground text-lg">
                     {pdfData?.name || "Cargando..."}
                   </h2>
-                  <p className="text-muted-foreground text-sm">
-                    Análisis de contrato hipotecario • Estado:{" "}
-                    {STATUS_MAP[status as keyof typeof STATUS_MAP] || status}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-muted-foreground text-sm">
+                      Análisis de contrato hipotecario •
+                    </p>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-medium text-xs ${
+                        status === "COMPLETED"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                          : status === "EXECUTING"
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                            : status === "QUEUED"
+                              ? "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                              : status === "REATTEMPTING"
+                                ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                                : status === "CANCELED"
+                                  ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
+                                  : status === "FAILED" || status === "CRASHED"
+                                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                                    : status === "TIMED_OUT"
+                                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
+                                      : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                      }`}
+                    >
+                      {status === "REATTEMPTING" && (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      )}
+                      {STATUS_MAP[status as keyof typeof STATUS_MAP] || status}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -280,12 +392,52 @@ function CheckrAnalysisContent() {
                     </div>
                   </div>
                 </div>
+              ) : status === "CANCELED" ? (
+                <div className="flex flex-1 items-center justify-center">
+                  <div className="max-w-md space-y-4 text-center">
+                    <img
+                      src="/x-red-icon.webp"
+                      alt="Cancel"
+                      className="mx-auto h-24 w-24 dark:brightness-90 dark:contrast-125"
+                    />
+                    <div>
+                      <h3 className="mb-2 font-semibold text-foreground text-xl">
+                        Procesamiento Cancelado
+                      </h3>
+                      <p className="text-muted-foreground text-sm">
+                        El análisis del contrato fue cancelado
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : ["CRASHED", "TIMED_OUT"].includes(status) ? (
+                <div className="flex flex-1 items-center justify-center">
+                  <div className="max-w-md space-y-4 text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-destructive/20 to-destructive/5">
+                      <AlertCircle className="h-8 w-8 text-destructive" />
+                    </div>
+                    <div>
+                      <h3 className="mb-2 font-semibold text-foreground text-xl">
+                        {status === "CRASHED"
+                          ? "Error Crítico"
+                          : "Tiempo Agotado"}
+                      </h3>
+                      <p className="text-muted-foreground text-sm">
+                        {status === "CRASHED"
+                          ? "Ocurrió un error crítico durante el procesamiento"
+                          : "El procesamiento excedió el tiempo límite"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="flex-1 rounded-lg border border-border/50 bg-muted/20 p-6">
                   <div className="flex h-full flex-col items-center justify-center space-y-6">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-500/5">
-                      <Clock className="h-8 w-8 animate-pulse text-blue-600" />
-                    </div>
+                    <img
+                      src="/clock-blueprint.webp"
+                      alt="Clock"
+                      className="h-16 w-16 dark:brightness-90 dark:contrast-110 dark:hue-rotate-180"
+                    />
 
                     <div className="text-center">
                       <h3 className="mb-2 font-semibold text-foreground text-xl">
@@ -298,9 +450,17 @@ function CheckrAnalysisContent() {
 
                     {/* Progress Stages */}
                     <div className="w-full max-w-md rounded-lg border border-border/50 bg-background/50 p-4">
-                      <h4 className="mb-4 font-medium text-muted-foreground text-sm uppercase">
-                        Tareas de Procesamiento
-                      </h4>
+                      <div className="mb-4 flex items-center justify-between">
+                        <h4 className="font-medium text-muted-foreground text-sm uppercase">
+                          Tareas de Procesamiento
+                        </h4>
+                        {status === "REATTEMPTING" && (
+                          <div className="flex items-center gap-1 text-orange-600 text-xs dark:text-orange-400">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Reintentando...
+                          </div>
+                        )}
+                      </div>
 
                       <div className="space-y-3">
                         {Object.entries(PROGRESS_STAGES).map(
@@ -315,10 +475,15 @@ function CheckrAnalysisContent() {
                                   Object.keys(PROGRESS_STAGES).indexOf(stage));
 
                             const isCurrent = currentStage === stage;
+                            const isRetrying =
+                              isCurrent && status === "REATTEMPTING";
+
                             const taskStatus = isCompleted
                               ? "COMPLETED"
                               : isCurrent
-                                ? "EXECUTING"
+                                ? isRetrying
+                                  ? "REATTEMPTING"
+                                  : "EXECUTING"
                                 : "PENDING";
 
                             return (
@@ -328,7 +493,9 @@ function CheckrAnalysisContent() {
                                   isCompleted
                                     ? "bg-green-50 text-green-900 dark:bg-green-950/20 dark:text-green-100"
                                     : isCurrent
-                                      ? "bg-blue-50 text-blue-900 dark:bg-blue-950/20 dark:text-blue-100"
+                                      ? isRetrying
+                                        ? "bg-orange-50 text-orange-900 dark:bg-orange-950/20 dark:text-orange-100"
+                                        : "bg-blue-50 text-blue-900 dark:bg-blue-950/20 dark:text-blue-100"
                                       : "bg-muted/50 text-muted-foreground"
                                 }`}
                               >
@@ -340,7 +507,9 @@ function CheckrAnalysisContent() {
                                     {isCompleted
                                       ? "Completado"
                                       : isCurrent
-                                        ? "En progreso"
+                                        ? isRetrying
+                                          ? "Reintentando..."
+                                          : "En progreso"
                                         : "Pendiente"}
                                   </p>
                                 </div>

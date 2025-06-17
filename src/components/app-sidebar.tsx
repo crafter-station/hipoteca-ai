@@ -76,7 +76,7 @@ export function AppSidebar() {
 
           {/* Nueva Hipoteca - Styled like v0 */}
           <Button size="sm" variant="outline" asChild>
-            <a href="/new">Nuevo Análisis</a>
+            <Link href="/checkr/new">Nuevo Análisis</Link>
           </Button>
 
           {/* Search - Styled like v0 with hover effects */}
