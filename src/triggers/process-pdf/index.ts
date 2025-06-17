@@ -1,5 +1,9 @@
 import { nanoid } from "@/lib/nanoid";
-import { type Contract, saveContract } from "@/models/contract";
+import {
+  type Contract,
+  saveContract,
+  saveKeyToContractMapping,
+} from "@/models/contract";
 import { logger, metadata, schemaTask } from "@trigger.dev/sdk/v3";
 import { z } from "zod";
 import { extractContentFromPdf } from "./extract-content";
@@ -20,6 +24,11 @@ export const processPDFTask = schemaTask({
     });
 
     try {
+      // Extract key from fileUrl (e.g., "https://o6dbw19iyd.ufs.sh/f/KEY" -> "KEY")
+      const urlParts = fileUrl.split("/");
+      const key = urlParts[urlParts.length - 1];
+      logger.info("extracted key from fileUrl", { key });
+
       // Update progress: extracting content
       metadata.set("progress", "extract_content");
       logger.info("extracting content from pdf");
@@ -46,6 +55,14 @@ export const processPDFTask = schemaTask({
       await saveContract(document);
       logger.info("contract saved successfully in redis");
 
+      // Save key-to-contract mapping
+      logger.info("saving key-to-contract mapping", {
+        key,
+        contractId: document.id,
+      });
+      await saveKeyToContractMapping(key, document.id);
+      logger.info("key-to-contract mapping saved successfully");
+
       // Update progress: storing contract context
       metadata.set("progress", "store_contract_context");
       logger.info("storing contract context");
@@ -62,6 +79,7 @@ export const processPDFTask = schemaTask({
 
       return {
         contractId: document.id,
+        key: key,
       };
     } catch (error) {
       logger.error("process pdf task failed", {

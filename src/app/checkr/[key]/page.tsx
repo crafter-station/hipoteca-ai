@@ -1,6 +1,9 @@
 "use client";
 
-import { getProcessedContract } from "@/actions/get-processed-contract";
+import {
+  getProcessedContract,
+  getProcessedContractByKey,
+} from "@/actions/get-processed-contract";
 import { TriggerProvider } from "@/components/TriggerProvider";
 import { AppSidebar } from "@/components/app-sidebar";
 import { PdfViewer } from "@/components/shared/pdf-viewer";
@@ -8,7 +11,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { Contract } from "@/models/contract";
 import { useRealtimeRun } from "@trigger.dev/react-hooks";
 import { AlertCircle, CheckCircle, FileText, Loader2, X } from "lucide-react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -61,6 +64,7 @@ function TaskStatusIcon({ status }: { status: string }) {
 
 function CheckrAnalysisContent() {
   const params = useParams();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const key = params.key as string;
   const runId = searchParams.get("runId");
@@ -68,9 +72,14 @@ function CheckrAnalysisContent() {
 
   const [pdfData, setPdfData] = useState<PDFData | null>(null);
   const [contract, setContract] = useState<Contract | null>(null);
-  console.log({ contract });
+  const [isLoadingContract, setIsLoadingContract] = useState(false);
 
-  // Use the useRealtimeRun hook for real-time updates
+  // LOGIC FLOW:
+  // 1. WITH runId: Show real-time progress tracking via useRealtimeRun
+  // 2. WITHOUT runId: Assume file is already processed, fetch contract directly
+  // 3. AFTER completion: Clean URL (remove runId/token) so reload doesn't show progress again
+
+  // Use the useRealtimeRun hook for real-time updates only if runId exists
   const { run, error } = useRealtimeRun(runId || "");
 
   // Debug logging for real-time connection
@@ -84,6 +93,7 @@ function CheckrAnalysisContent() {
     });
   }, [runId, token, run, error]);
 
+  // Set PDF data based on key
   useEffect(() => {
     if (key) {
       // Construct the real UploadThing URL
@@ -97,6 +107,34 @@ function CheckrAnalysisContent() {
       });
     }
   }, [key]);
+
+  // If no runId, try to fetch contract directly by key
+  useEffect(() => {
+    if (!runId && key && !contract && !isLoadingContract) {
+      setIsLoadingContract(true);
+      getProcessedContractByKey(key)
+        .then((contractData) => {
+          if (contractData) {
+            setContract(contractData);
+            setPdfData((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    name: contractData.pdfName,
+                  }
+                : null,
+            );
+            console.log("Contract loaded by key:", contractData.id);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching contract by key:", error);
+        })
+        .finally(() => {
+          setIsLoadingContract(false);
+        });
+    }
+  }, [key, runId, contract, isLoadingContract]);
 
   // Handle run updates
   useEffect(() => {
@@ -194,6 +232,10 @@ function CheckrAnalysisContent() {
                 : null,
             );
             console.log("Contract processed successfully:", contractData.id);
+
+            // Clean up URL immediately by removing runId and token parameters
+            // This ensures that if user reloads, they won't see the progress loader again
+            router.replace(`/checkr/${key}`, { scroll: false });
           }
         })
         .catch((error) => {
@@ -201,9 +243,10 @@ function CheckrAnalysisContent() {
           toast.error("Error cargando el contrato procesado");
         });
     }
-  }, [run]);
+  }, [run, key, router]);
 
-  if (!runId || !token) {
+  // If we have runId but no token, show error
+  if (runId && !token) {
     return (
       <SidebarProvider>
         <div className="flex h-screen w-full">
@@ -260,7 +303,8 @@ function CheckrAnalysisContent() {
     );
   }
 
-  if (!run) {
+  // If we have runId but no run data yet, show connecting
+  if (runId && !run) {
     return (
       <SidebarProvider>
         <div className="flex h-screen w-full">
@@ -288,9 +332,69 @@ function CheckrAnalysisContent() {
     );
   }
 
-  const currentStage = (run.metadata?.progress as string) || "extract_content";
-  const status = run.status;
-  const isCompleted = status === "COMPLETED" && contract;
+  // If no runId and still loading contract, show loading
+  if (!runId && isLoadingContract) {
+    return (
+      <SidebarProvider>
+        <div className="flex h-screen w-full">
+          <AppSidebar />
+          <div className="flex min-w-0 flex-1 flex-col bg-background p-2">
+            <SidebarTrigger variant="outline" />
+            <main className="flex flex-1 items-center justify-center p-4">
+              <div className="max-w-md space-y-4 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-blue-500/5">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="mb-2 font-semibold text-foreground text-xl">
+                    Cargando Contrato...
+                  </h3>
+                  <p className="text-muted-foreground text-sm">
+                    Obteniendo información del análisis
+                  </p>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  // If no runId and no contract found, show not found
+  if (!runId && !contract && !isLoadingContract) {
+    return (
+      <SidebarProvider>
+        <div className="flex h-screen w-full">
+          <AppSidebar />
+          <div className="flex min-w-0 flex-1 flex-col bg-background p-2">
+            <SidebarTrigger variant="outline" />
+            <main className="flex flex-1 items-center justify-center p-4">
+              <div className="max-w-md space-y-4 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-destructive/20 to-destructive/5">
+                  <AlertCircle className="h-8 w-8 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="mb-2 font-semibold text-foreground text-xl">
+                    Contrato No Encontrado
+                  </h3>
+                  <p className="text-muted-foreground text-sm">
+                    El contrato no existe o aún no ha sido procesado
+                  </p>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+    );
+  }
+
+  // Determine current status and stage
+  const currentStage = (run?.metadata?.progress as string) || "completed";
+  const status = run?.status || (contract ? "COMPLETED" : "PENDING");
+  const isCompleted =
+    (status === "COMPLETED" && contract) || (!runId && contract);
 
   return (
     <SidebarProvider>
@@ -372,7 +476,7 @@ function CheckrAnalysisContent() {
               </div>
 
               {/* Processing Status or PDF Viewer */}
-              {status === "COMPLETED" && contract && pdfData ? (
+              {isCompleted && pdfData ? (
                 <div className="flex-1 overflow-hidden rounded-lg border border-border bg-background">
                   <PdfViewer pdfUrl={pdfData.url} className="h-full w-full" />
                 </div>
@@ -448,78 +552,82 @@ function CheckrAnalysisContent() {
                       </p>
                     </div>
 
-                    {/* Progress Stages */}
-                    <div className="w-full max-w-md rounded-lg border border-border/50 bg-background/50 p-4">
-                      <div className="mb-4 flex items-center justify-between">
-                        <h4 className="font-medium text-muted-foreground text-sm uppercase">
-                          Tareas de Procesamiento
-                        </h4>
-                        {status === "REATTEMPTING" && (
-                          <div className="flex items-center gap-1 text-orange-600 text-xs dark:text-orange-400">
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                            Reintentando...
-                          </div>
-                        )}
-                      </div>
+                    {/* Progress Stages - only show if we have runId */}
+                    {runId && (
+                      <div className="w-full max-w-md rounded-lg border border-border/50 bg-background/50 p-4">
+                        <div className="mb-4 flex items-center justify-between">
+                          <h4 className="font-medium text-muted-foreground text-sm uppercase">
+                            Tareas de Procesamiento
+                          </h4>
+                          {status === "REATTEMPTING" && (
+                            <div className="flex items-center gap-1 text-orange-600 text-xs dark:text-orange-400">
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Reintentando...
+                            </div>
+                          )}
+                        </div>
 
-                      <div className="space-y-3">
-                        {Object.entries(PROGRESS_STAGES).map(
-                          ([stage, description]) => {
-                            // Calculate if this stage is completed, current, or pending
-                            const isCompleted =
-                              currentStage === "completed" ||
-                              (currentStage &&
-                                Object.keys(PROGRESS_STAGES).indexOf(
-                                  currentStage,
-                                ) >
-                                  Object.keys(PROGRESS_STAGES).indexOf(stage));
+                        <div className="space-y-3">
+                          {Object.entries(PROGRESS_STAGES).map(
+                            ([stage, description]) => {
+                              // Calculate if this stage is completed, current, or pending
+                              const isCompleted =
+                                currentStage === "completed" ||
+                                (currentStage &&
+                                  Object.keys(PROGRESS_STAGES).indexOf(
+                                    currentStage,
+                                  ) >
+                                    Object.keys(PROGRESS_STAGES).indexOf(
+                                      stage,
+                                    ));
 
-                            const isCurrent = currentStage === stage;
-                            const isRetrying =
-                              isCurrent && status === "REATTEMPTING";
+                              const isCurrent = currentStage === stage;
+                              const isRetrying =
+                                isCurrent && status === "REATTEMPTING";
 
-                            const taskStatus = isCompleted
-                              ? "COMPLETED"
-                              : isCurrent
-                                ? isRetrying
-                                  ? "REATTEMPTING"
-                                  : "EXECUTING"
-                                : "PENDING";
+                              const taskStatus = isCompleted
+                                ? "COMPLETED"
+                                : isCurrent
+                                  ? isRetrying
+                                    ? "REATTEMPTING"
+                                    : "EXECUTING"
+                                  : "PENDING";
 
-                            return (
-                              <div
-                                key={stage}
-                                className={`flex items-center justify-between rounded-md p-3 transition-colors ${
-                                  isCompleted
-                                    ? "bg-green-50 text-green-900 dark:bg-green-950/20 dark:text-green-100"
-                                    : isCurrent
-                                      ? isRetrying
-                                        ? "bg-orange-50 text-orange-900 dark:bg-orange-950/20 dark:text-orange-100"
-                                        : "bg-blue-50 text-blue-900 dark:bg-blue-950/20 dark:text-blue-100"
-                                      : "bg-muted/50 text-muted-foreground"
-                                }`}
-                              >
-                                <div>
-                                  <p className="font-medium text-sm">
-                                    {description}
-                                  </p>
-                                  <p className="text-xs opacity-80">
-                                    {isCompleted
-                                      ? "Completado"
+                              return (
+                                <div
+                                  key={stage}
+                                  className={`flex items-center justify-between rounded-md p-3 transition-colors ${
+                                    isCompleted
+                                      ? "bg-green-50 text-green-900 dark:bg-green-950/20 dark:text-green-100"
                                       : isCurrent
                                         ? isRetrying
-                                          ? "Reintentando..."
-                                          : "En progreso"
-                                        : "Pendiente"}
-                                  </p>
+                                          ? "bg-orange-50 text-orange-900 dark:bg-orange-950/20 dark:text-orange-100"
+                                          : "bg-blue-50 text-blue-900 dark:bg-blue-950/20 dark:text-blue-100"
+                                        : "bg-muted/50 text-muted-foreground"
+                                  }`}
+                                >
+                                  <div>
+                                    <p className="font-medium text-sm">
+                                      {description}
+                                    </p>
+                                    <p className="text-xs opacity-80">
+                                      {isCompleted
+                                        ? "Completado"
+                                        : isCurrent
+                                          ? isRetrying
+                                            ? "Reintentando..."
+                                            : "En progreso"
+                                          : "Pendiente"}
+                                    </p>
+                                  </div>
+                                  <TaskStatusIcon status={taskStatus} />
                                 </div>
-                                <TaskStatusIcon status={taskStatus} />
-                              </div>
-                            );
-                          },
-                        )}
+                              );
+                            },
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               )}
