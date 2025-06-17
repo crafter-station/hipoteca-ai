@@ -2,6 +2,7 @@
 
 import { SmoothScrollLink } from "@/components/landing/smooth-scroll-link";
 import { Button } from "@/components/ui/button";
+import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 import { SignedOut } from "@clerk/clerk-react";
 import Link from "next/link";
 import { UserButton } from "../user-button";
@@ -58,6 +59,7 @@ export function Header() {
             </Button>
           </div>
         </SignedOut>
+        <ThemeSwitcher />
         <UserButton />
       </div>
     </header>
