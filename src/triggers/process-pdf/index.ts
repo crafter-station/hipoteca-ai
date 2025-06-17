@@ -50,6 +50,10 @@ export const processPDFTask = schemaTask({
       });
 
       logger.info("process pdf task finished");
+
+      return {
+        contractId: document.id,
+      };
     } catch (error) {
       logger.error("process pdf task failed", {
         error,

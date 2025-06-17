@@ -62,14 +62,30 @@ export async function extractHighlightsFromContent(
     highlights,
     async (highlight) => {
       const prompt = `Eres un asistente legal que enriquece cláusulas de contratos hipotecarios.
-
+TAREA:
 Toma la siguiente cláusula y devuelve una descripción explicativa en formato JSON. 
+
+PASOS:
+1. **Normalización de términos**  
+  - Define internamente un “diccionario de normalización” que mapee todos los sinónimos o variantes de un mismo concepto a una forma estándar.
+  - Reemplaza en la cláusula cada variante por su forma estándar según el diccionario.
+
+2. **Contextualización y enriquecimiento**
 Puedes usar la función \`searchMortgageKnowledge(query)\` si necesitas contexto adicional, pero no inventes datos. Si la función no aporta, basa la descripción solo en la cláusula.
 
+3. **Generación de descripción**  
+Con la cláusula normalizada, redacta un párrafo que explique clara y concisamente:
+  - Obligaciones y derechos: ¿qué establece la cláusula?
+  - Riesgos principales para las partes.
+  - Otra información importante que hayas encontrado y que sea necesario mencionar.
+
+FORMATO DE SALIDA:
 Devuelve exactamente este formato (remueve los \`\`\`json \`\`\`):
 {
   "description": string
 }
+
+Donde "description" es lo del paso 3.
 
 Cláusula:
 "${highlight.sentence}"
