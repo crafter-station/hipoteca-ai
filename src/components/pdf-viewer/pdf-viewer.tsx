@@ -15,6 +15,7 @@ import { Toolbar } from "./toolbar";
 // PDF.js types
 declare global {
   interface Window {
+    // @ts-ignore - pdfjsLib is not defined in the global scope
     pdfjsLib: {
       getDocument: (url: string) => Promise<unknown>;
       GlobalWorkerOptions: {

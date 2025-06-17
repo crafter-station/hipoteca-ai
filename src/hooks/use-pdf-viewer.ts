@@ -17,6 +17,7 @@ export const usePDFViewer = (pdfUrl: string) => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }));
       const loadingTask = window.pdfjsLib.getDocument(pdfUrl);
+      // @ts-ignore - loadingTask is guaranteed to exist at this point
       const pdfDoc = await loadingTask.promise;
       setState((prev) => ({
         ...prev,

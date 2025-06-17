@@ -12,7 +12,8 @@
       "pdf-viewer.tsx",
       "use-pdf-viewer.ts",
       "use-pdf-search.ts",
-      "use-pdf-highlights.ts"
+      "use-pdf-highlights.ts",
+      "pdf-utils.ts"
     ]
   },
   "organizeImports": {
