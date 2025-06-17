@@ -102,3 +102,40 @@ export async function getContractById(id: string): Promise<Contract | null> {
 export function allContractHighlightTypes(): string[] {
   return Object.values(ContractHighlightType);
 }
+
+// Key-to-Contract mapping functions
+export async function saveKeyToContractMapping(
+  key: string,
+  contractId: string,
+) {
+  try {
+    const mappingKey = `key_to_contract:${key}`;
+    await redis.set(mappingKey, contractId);
+  } catch (error) {
+    console.error("Error saving key-to-contract mapping:", error);
+    throw error;
+  }
+}
+
+export async function getContractIdByKey(key: string): Promise<string | null> {
+  try {
+    const mappingKey = `key_to_contract:${key}`;
+    return await redis.get(mappingKey);
+  } catch (error) {
+    console.error("Error getting contract ID by key:", error);
+    throw error;
+  }
+}
+
+export async function getContractByKey(key: string): Promise<Contract | null> {
+  try {
+    const contractId = await getContractIdByKey(key);
+    if (!contractId) {
+      return null;
+    }
+    return await getContractById(contractId);
+  } catch (error) {
+    console.error("Error getting contract by key:", error);
+    throw error;
+  }
+}

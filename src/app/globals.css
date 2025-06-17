@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "pdfjs-dist/web/pdf_viewer.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -44,7 +45,7 @@
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.375rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -119,4 +120,107 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* PDF Highlight Types */
+.highlight-term {
+  background-color: #2563eb !important;
+  color: transparent !important;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 0 0 0 white;
+  opacity: 0.7;
+}
+
+.highlight-fee {
+  background-color: #ea580c !important;
+  color: transparent !important;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 0 0 0 white;
+}
+
+.highlight-duty-user {
+  background-color: #16a34a !important;
+  color: transparent !important;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 0 0 0 white;
+}
+
+.highlight-duty-bank {
+  background-color: #0d9488 !important;
+  color: transparent !important;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 0 0 0 white;
+}
+
+.highlight-var {
+  background-color: #7c3aed !important;
+  color: transparent !important;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-shadow: 0 0 0 white;
+}
+
+.highlight-risk {
+  background-color: #eab308 !important;
+  color: transparent !important;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  text-shadow: 0 0 0 black;
+}
+
+.highlight-abuse {
+  background-color: #dc2626 !important;
+  color: transparent !important;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  animation: pulse-warning 2s infinite;
+  text-shadow: 0 0 0 white;
+}
+
+@keyframes pulse-warning {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Hover effects for all highlight types */
+.highlight-term:hover,
+.highlight-fee:hover,
+.highlight-duty-user:hover,
+.highlight-duty-bank:hover,
+.highlight-var:hover,
+.highlight-risk:hover,
+.highlight-abuse:hover {
+  opacity: 1;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Additional hover states for annotation highlights */
+.highlight-term:hover,
+.highlight-fee:hover,
+.highlight-duty-user:hover,
+.highlight-duty-bank:hover,
+.highlight-var:hover,
+.highlight-risk:hover,
+.highlight-abuse:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
 }
