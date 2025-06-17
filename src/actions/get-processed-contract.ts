@@ -2,6 +2,6 @@
 
 import { getContractById } from "@/models/contract";
 
-export function getProcessedContract(id: string) {
+export async function getProcessedContract(id: string) {
   return getContractById(id);
 }

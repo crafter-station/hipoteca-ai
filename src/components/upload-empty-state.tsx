@@ -43,10 +43,15 @@ export function UploadEmptyState({
         },
       });
 
-      await processPDF(ufsUrl, name);
+      const resp = await processPDF(ufsUrl, name);
 
-      // Redirect to the analysis page with the key
-      router.push(`/checkr/${key}`);
+      if (!resp.error && resp.runId && resp.token) {
+        // Redirect to analysis page with key, runId and token for subscription
+        router.push(`/checkr/${key}?runId=${resp.runId}&token=${resp.token}`);
+      } else {
+        console.error("Error processing PDF:", resp.error);
+        setIsAnalyzing(false);
+      }
     } catch (error) {
       console.error("Upload failed:", error);
       setIsAnalyzing(false);

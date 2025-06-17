@@ -44,6 +44,7 @@
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@tanstack/react-query": "^5.80.7",
+    "@trigger.dev/react-hooks": "^3.3.17",
     "@trigger.dev/sdk": "^3.3.17",
     "@uploadthing/react": "^7.3.1",
     "@upstash/redis": "^1.35.0",
