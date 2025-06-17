@@ -1,6 +1,6 @@
 export type MortgageKnowledge = Readonly<{
-	content: string;
-	pageIndex: number;
-	chunkIndex: number;
-	documentId: string;
+  content: string;
+  pageIndex: number;
+  chunkIndex: number;
+  documentId: string;
 }>;

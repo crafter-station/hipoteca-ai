@@ -1,6 +1,6 @@
 import {
-	generateUploadButton,
-	generateUploadDropzone,
+  generateUploadButton,
+  generateUploadDropzone,
 } from "@uploadthing/react";
 import { genUploader } from "uploadthing/client";
 
