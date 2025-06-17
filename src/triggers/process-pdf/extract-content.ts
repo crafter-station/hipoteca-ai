@@ -1,4 +1,5 @@
 import { mistral } from "@/clients/mistral";
+import { processInParallel } from "@/lib/utils";
 import type { ContractContextChunk } from "@/models/contract-context";
 import { openai } from "@ai-sdk/openai";
 import { generateText } from "ai";
@@ -24,14 +25,6 @@ export async function extractContentFromPdf(fileUrl: string) {
 		console.error(error);
 		throw new Error("Error generating object from PDF", { cause: error });
 	}
-}
-
-async function processInParallel<T, R>(
-	items: T[],
-	processor: (item: T) => Promise<R>,
-): Promise<R[]> {
-	const promises = items.map(processor);
-	return Promise.all(promises);
 }
 
 async function getTextFromPdf(fileUrl: string) {

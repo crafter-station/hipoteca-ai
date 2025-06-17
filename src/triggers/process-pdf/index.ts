@@ -3,6 +3,7 @@ import { type Contract, saveContract } from "@/models/contract";
 import { logger, schemaTask } from "@trigger.dev/sdk/v3";
 import { z } from "zod";
 import { extractContentFromPdf } from "./extract-content";
+import { extractHighlightsFromContent } from "./extract-highlights";
 import { storeContractContext } from "./store-contract-context";
 
 export const processPDFTask = schemaTask({
@@ -21,6 +22,8 @@ export const processPDFTask = schemaTask({
 		try {
 			logger.info("extracting content from pdf");
 			const { markdown, html, chunks } = await extractContentFromPdf(fileUrl);
+			logger.info("extracting highlights from pdf");
+			const highlights = await extractHighlightsFromContent(chunks);
 
 			const document: Contract = {
 				id: nanoid(),
@@ -29,6 +32,8 @@ export const processPDFTask = schemaTask({
 				pdfName: fileName,
 				htmlContent: html,
 				markdownContent: markdown,
+				chunks,
+				highlights,
 				createdAt: new Date(),
 			};
 
