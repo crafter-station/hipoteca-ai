@@ -7,7 +7,13 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": []
+    "ignore": [
+      "pdf-canvas.tsx",
+      "pdf-viewer.tsx",
+      "use-pdf-viewer.ts",
+      "use-pdf-search.ts",
+      "use-pdf-highlights.ts"
+    ]
   },
   "organizeImports": {
     "enabled": true,

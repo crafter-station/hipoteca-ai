@@ -6,9 +6,11 @@ import {
 } from "@/actions/get-processed-contract";
 import { TriggerProvider } from "@/components/TriggerProvider";
 import { AppSidebar } from "@/components/app-sidebar";
-import { PdfViewer } from "@/components/shared/pdf-viewer";
+import PDFViewer from "@/components/pdf-viewer/pdf-viewer";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import type { Contract } from "@/models/contract";
+import type { Contract, ContractHighlight } from "@/models/contract";
+import { ContractHighlightType } from "@/models/contract";
+import type { HighlightAnnotation, HighlightType } from "@/types/pdf-viewer";
 import { useRealtimeRun } from "@trigger.dev/react-hooks";
 import { AlertCircle, CheckCircle, FileText, Loader2, X } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -42,6 +44,100 @@ const STATUS_MAP = {
   TIMED_OUT: "Tiempo agotado",
 };
 
+// Mapping from ContractHighlightType to PDF Viewer HighlightType (for colors)
+function mapContractHighlightType(
+  contractType: ContractHighlightType,
+): HighlightType {
+  // Map contract highlight types to PDF viewer highlight types based on semantic meaning
+  switch (contractType) {
+    // Financial terms and fees
+    case ContractHighlightType.LOAN:
+    case ContractHighlightType.INTEREST_RATE:
+    case ContractHighlightType.MONTHLY_PAYMENT:
+    case ContractHighlightType.INITIAL_EXPENSES:
+    case ContractHighlightType.COSTS:
+    case ContractHighlightType.FEES:
+      return "FEE";
+
+    // User obligations
+    case ContractHighlightType.MORTGAGE_TERM:
+    case ContractHighlightType.INSURANCE_COVERAGE:
+      return "DUTY_USER";
+
+    // Risks and penalties
+    case ContractHighlightType.ABUSIVE_CLAUSE:
+    case ContractHighlightType.PENALTIES:
+      return "ABUSE";
+
+    case ContractHighlightType.FINANCIAL_RISK:
+      return "RISK";
+
+    // Variable conditions and consultations
+    case ContractHighlightType.CONSULT_THE_BANK:
+    case ContractHighlightType.NEGOTIABLE_CLAUSE:
+    case ContractHighlightType.POSSIBLE_FUTURE_CHANGES:
+      return "VAR";
+
+    case ContractHighlightType.UNDISCLOSED_CHARGE_IN_PDF:
+      return "RISK";
+
+    // Default fallback
+    default:
+      return "TERM";
+  }
+}
+
+// Mapping from ContractHighlightType to Spanish titles for tooltips
+function getContractHighlightTitle(
+  contractType: ContractHighlightType,
+): string {
+  switch (contractType) {
+    case ContractHighlightType.LOAN:
+      return "Préstamo";
+    case ContractHighlightType.INTEREST_RATE:
+      return "Tipo de interés";
+    case ContractHighlightType.MONTHLY_PAYMENT:
+      return "Cuota mensual";
+    case ContractHighlightType.INITIAL_EXPENSES:
+      return "Gastos iniciales";
+    case ContractHighlightType.COSTS:
+      return "Costos";
+    case ContractHighlightType.FEES:
+      return "Comisiones";
+    case ContractHighlightType.MORTGAGE_TERM:
+      return "Plazo hipotecario";
+    case ContractHighlightType.INSURANCE_COVERAGE:
+      return "Cobertura de seguro";
+    case ContractHighlightType.ABUSIVE_CLAUSE:
+      return "Cláusula abusiva";
+    case ContractHighlightType.PENALTIES:
+      return "Penalizaciones";
+    case ContractHighlightType.FINANCIAL_RISK:
+      return "Riesgo financiero";
+    case ContractHighlightType.CONSULT_THE_BANK:
+      return "Consultar al banco";
+    case ContractHighlightType.NEGOTIABLE_CLAUSE:
+      return "Cláusula negociable";
+    case ContractHighlightType.POSSIBLE_FUTURE_CHANGES:
+      return "Posibles cambios futuros";
+    case ContractHighlightType.UNDISCLOSED_CHARGE_IN_PDF:
+      return "Cargo no divulgado en PDF";
+    default:
+      return "Término técnico";
+  }
+}
+
+// Convert Contract highlights to PDF Viewer highlights
+function convertContractHighlights(
+  contractHighlights: ContractHighlight[],
+): HighlightAnnotation[] {
+  return contractHighlights.map((highlight) => ({
+    sentence: highlight.sentence,
+    type: mapContractHighlightType(highlight.type),
+    tooltip: `${getContractHighlightTitle(highlight.type)}: ${highlight.description}`,
+  }));
+}
+
 function TaskStatusIcon({ status }: { status: string }) {
   if (status === "COMPLETED") {
     return <CheckCircle className="h-4.5 w-4.5 text-green-600" />;
@@ -62,7 +158,8 @@ function TaskStatusIcon({ status }: { status: string }) {
   return null;
 }
 
-function CheckrAnalysisContent() {
+// Component with real-time updates (when we have runId and token)
+function CheckrAnalysisWithRealtime() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,15 +169,83 @@ function CheckrAnalysisContent() {
 
   const [pdfData, setPdfData] = useState<PDFData | null>(null);
   const [contract, setContract] = useState<Contract | null>(null);
+
+  // Use the useRealtimeRun hook for real-time updates
+  const { run, error } = useRealtimeRun(runId || "");
+
+  return (
+    <CheckrAnalysisContent
+      keyParam={key}
+      runId={runId}
+      token={token}
+      run={run}
+      error={error}
+      pdfData={pdfData}
+      setPdfData={setPdfData}
+      contract={contract}
+      setContract={setContract}
+      router={router}
+    />
+  );
+}
+
+// Component without real-time updates (when accessing directly without runId/token)
+function CheckrAnalysisStatic() {
+  const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const key = params.key as string;
+
+  const [pdfData, setPdfData] = useState<PDFData | null>(null);
+  const [contract, setContract] = useState<Contract | null>(null);
+  console.log({ contract });
+
+  return (
+    <CheckrAnalysisContent
+      keyParam={key}
+      runId={null}
+      token={null}
+      run={null}
+      error={null}
+      pdfData={pdfData}
+      setPdfData={setPdfData}
+      contract={contract}
+      setContract={setContract}
+      router={router}
+    />
+  );
+}
+
+// Shared content component
+function CheckrAnalysisContent({
+  keyParam,
+  runId,
+  token,
+  run,
+  error,
+  pdfData,
+  setPdfData,
+  contract,
+  setContract,
+  router,
+}: {
+  keyParam: string;
+  runId: string | null;
+  token: string | null;
+  run: ReturnType<typeof useRealtimeRun>["run"] | null;
+  error: ReturnType<typeof useRealtimeRun>["error"] | null;
+  pdfData: PDFData | null;
+  setPdfData: React.Dispatch<React.SetStateAction<PDFData | null>>;
+  contract: Contract | null;
+  setContract: React.Dispatch<React.SetStateAction<Contract | null>>;
+  router: ReturnType<typeof useRouter>;
+}) {
   const [isLoadingContract, setIsLoadingContract] = useState(false);
 
   // LOGIC FLOW:
   // 1. WITH runId: Show real-time progress tracking via useRealtimeRun
   // 2. WITHOUT runId: Assume file is already processed, fetch contract directly
   // 3. AFTER completion: Clean URL (remove runId/token) so reload doesn't show progress again
-
-  // Use the useRealtimeRun hook for real-time updates only if runId exists
-  const { run, error } = useRealtimeRun(runId || "");
 
   // Debug logging for real-time connection
   useEffect(() => {
@@ -95,24 +260,24 @@ function CheckrAnalysisContent() {
 
   // Set PDF data based on key
   useEffect(() => {
-    if (key) {
+    if (keyParam) {
       // Construct the real UploadThing URL
-      const pdfUrl = `https://o6dbw19iyd.ufs.sh/f/${key}`;
+      const pdfUrl = `https://o6dbw19iyd.ufs.sh/f/${keyParam}`;
 
       // Set PDF data with real URL
       setPdfData({
-        name: `hipoteca-${key.slice(0, 8)}.pdf`, // Generate a name based on key
+        name: `hipoteca-${keyParam.slice(0, 8)}.pdf`, // Generate a name based on key
         url: pdfUrl,
-        key: key,
+        key: keyParam,
       });
     }
-  }, [key]);
+  }, [keyParam, setPdfData]);
 
   // If no runId, try to fetch contract directly by key
   useEffect(() => {
-    if (!runId && key && !contract && !isLoadingContract) {
+    if (!runId && keyParam && !contract && !isLoadingContract) {
       setIsLoadingContract(true);
-      getProcessedContractByKey(key)
+      getProcessedContractByKey(keyParam)
         .then((contractData) => {
           if (contractData) {
             setContract(contractData);
@@ -134,7 +299,7 @@ function CheckrAnalysisContent() {
           setIsLoadingContract(false);
         });
     }
-  }, [key, runId, contract, isLoadingContract]);
+  }, [keyParam, runId, contract, isLoadingContract, setContract, setPdfData]);
 
   // Handle run updates
   useEffect(() => {
@@ -235,7 +400,7 @@ function CheckrAnalysisContent() {
 
             // Clean up URL immediately by removing runId and token parameters
             // This ensures that if user reloads, they won't see the progress loader again
-            router.replace(`/checkr/${key}`, { scroll: false });
+            router.replace(`/checkr/${keyParam}`, { scroll: false });
           }
         })
         .catch((error) => {
@@ -243,7 +408,7 @@ function CheckrAnalysisContent() {
           toast.error("Error cargando el contrato procesado");
         });
     }
-  }, [run, key, router]);
+  }, [run, keyParam, router, setContract, setPdfData]);
 
   // If we have runId but no token, show error
   if (runId && !token) {
@@ -478,7 +643,16 @@ function CheckrAnalysisContent() {
               {/* Processing Status or PDF Viewer */}
               {isCompleted && pdfData ? (
                 <div className="flex-1 overflow-hidden rounded-lg border border-border bg-background">
-                  <PdfViewer pdfUrl={pdfData.url} className="h-full w-full" />
+                  <PDFViewer
+                    pdfUrl={pdfData.url}
+                    className="h-full w-full"
+                    instanceId={`contract-${keyParam}`}
+                    highlights={
+                      contract
+                        ? convertContractHighlights(contract.highlights)
+                        : []
+                    }
+                  />
                 </div>
               ) : status === "FAILED" ? (
                 <div className="flex flex-1 items-center justify-center">
@@ -643,9 +817,16 @@ export default function CheckrAnalysisPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  return (
-    <TriggerProvider accessToken={token || ""}>
-      <CheckrAnalysisContent />
-    </TriggerProvider>
-  );
+  // If we have a token, wrap with TriggerProvider for real-time updates
+  // If no token, render directly (for clean URLs after processing)
+  if (token) {
+    return (
+      <TriggerProvider accessToken={token}>
+        <CheckrAnalysisWithRealtime />
+      </TriggerProvider>
+    );
+  }
+
+  // No token - render without TriggerProvider (direct contract access mode)
+  return <CheckrAnalysisStatic />;
 }
