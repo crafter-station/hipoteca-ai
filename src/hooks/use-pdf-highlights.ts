@@ -6,7 +6,7 @@ export const usePDFHighlights = (instanceId: string) => {
     Map<string, TooltipData>
   >(new Map());
   const highlightRects = useRef<Map<number | string, HighlightRect[]>>(
-    new Map(),
+    new Map()
   );
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -25,24 +25,24 @@ export const usePDFHighlights = (instanceId: string) => {
       currentRects.push(rect);
       highlightRects.current.set(resultIndex, currentRects);
     },
-    [],
+    []
   );
 
   const createTooltip = useCallback(
     (
       triggerElement: HTMLElement,
       data: TooltipData,
-      onNavigateToResult?: (index: number) => void,
+      onNavigateToResult?: (index: number) => void
     ) => {
       console.log(
         `🎯 TOOLTIP SHOWN: "${data.matchText.substring(0, 50)}..." (${
           data.resultIndex === -1 ? "annotation" : "search result"
-        })`,
+        })`
       );
 
       // Check if tooltip already exists for this instance
       const existingTooltip = document.getElementById(
-        `active-tooltip-${instanceId}`,
+        `active-tooltip-${instanceId}`
       );
       if (existingTooltip) {
         // Clear any pending removal timeout
@@ -148,18 +148,18 @@ export const usePDFHighlights = (instanceId: string) => {
 
       document.body.appendChild(tooltip);
     },
-    [instanceId],
+    [instanceId]
   );
 
   const removeTooltip = useCallback(() => {
     const existingTooltip = document.getElementById(
-      `active-tooltip-${instanceId}`,
+      `active-tooltip-${instanceId}`
     );
     if (existingTooltip) {
       // Check if it's already being removed (has opacity 0)
       if (existingTooltip.style.opacity === "0") {
         console.log(
-          `⏭️ Tooltip already being removed for instance ${instanceId}`,
+          `⏭️ Tooltip already being removed for instance ${instanceId}`
         );
         return;
       }
@@ -191,7 +191,7 @@ export const usePDFHighlights = (instanceId: string) => {
     (callback: () => void, delay: number) => {
       tooltipTimeoutRef.current = setTimeout(callback, delay);
     },
-    [],
+    []
   );
 
   return {

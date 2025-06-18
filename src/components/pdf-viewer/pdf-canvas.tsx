@@ -129,11 +129,33 @@ export function PDFCanvas({
   >(new Map());
   const [totalPages, setTotalPages] = useState(0);
 
+  // Track render tasks to cancel them if needed
+  const renderTasksRef = useRef<Map<number, { promise: Promise<void>; cancel: () => void }>>(new Map());
+
+  // Track which pages are currently being rendered to avoid duplicate renders
+  const renderingPagesRef = useRef<Set<number>>(new Set());
+
   // Initialize pages when PDF loads
   useEffect(() => {
     if (pdf) {
       setTotalPages(pdf.numPages);
     }
+  }, [pdf]);
+
+  // Cleanup render tasks when component unmounts or PDF changes
+  useEffect(() => {
+    return () => {
+      // Cancel all pending render tasks
+      renderTasksRef.current.forEach((task) => {
+        try {
+          task.cancel();
+        } catch (err) {
+          // Ignore cancellation errors
+        }
+      });
+      renderTasksRef.current.clear();
+      renderingPagesRef.current.clear();
+    };
   }, [pdf]);
 
   // Render all pages
@@ -153,7 +175,27 @@ export function PDFCanvas({
   const renderPage = async (pageNum: number) => {
     if (!pdf || !containerRef.current) return;
 
+    // Skip if this page is already being rendered
+    if (renderingPagesRef.current.has(pageNum)) {
+      if (DEBUG) console.log(`Page ${pageNum} already being rendered, skipping`);
+      return;
+    }
+
+    // Mark this page as being rendered
+    renderingPagesRef.current.add(pageNum);
+
     try {
+      // Cancel any existing render task for this page only if it's still pending
+      const existingTask = renderTasksRef.current.get(pageNum);
+      if (existingTask) {
+        try {
+          existingTask.cancel();
+        } catch (err) {
+          // Ignore if already completed or cancelled
+        }
+        renderTasksRef.current.delete(pageNum);
+      }
+
       const page = await pdf.getPage(pageNum);
       const pageRefs_current = pageRefs.current.get(pageNum);
 
@@ -180,6 +222,10 @@ export function PDFCanvas({
       const context = canvas.getContext("2d");
       if (!context) return;
 
+      // Clear the canvas before rendering
+      // @ts-ignore - canvas is guaranteed to exist at this point
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
       // @ts-ignore - canvas is guaranteed to exist at this point
       canvas.height = viewport.height;
       // @ts-ignore - canvas is guaranteed to exist at this point
@@ -196,7 +242,16 @@ export function PDFCanvas({
         canvasContext: context,
         viewport: viewport,
       };
-      await page.render(renderContext).promise;
+
+      // Start the render task and store it for potential cancellation
+      const renderTask = page.render(renderContext) as { promise: Promise<void>; cancel: () => void };
+      renderTasksRef.current.set(pageNum, renderTask);
+
+      await renderTask.promise;
+
+      // Remove the completed task from tracking
+      renderTasksRef.current.delete(pageNum);
+      renderingPagesRef.current.delete(pageNum);
 
       const textContent = await page.getTextContent();
 
@@ -261,7 +316,14 @@ export function PDFCanvas({
         }, 300); // Increased timeout to ensure text layer is fully ready
       }
     } catch (err) {
-      console.error(`Error rendering page ${pageNum}:`, err);
+      // Remove the failed task from tracking
+      renderTasksRef.current.delete(pageNum);
+      renderingPagesRef.current.delete(pageNum);
+
+      // Don't log cancellation errors as they're expected
+      if (err instanceof Error && !err.message.includes('Rendering cancelled')) {
+        console.error(`Error rendering page ${pageNum}:`, err);
+      }
     }
   };
 
