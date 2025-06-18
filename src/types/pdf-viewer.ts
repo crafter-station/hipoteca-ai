@@ -55,6 +55,10 @@ export interface PDFViewerProps {
     onToggleFullscreen: () => void;
     onToggleSearch: () => void;
   }) => void;
+  // Minimap control
+  showMinimap?: boolean;
+  // Minimap navigation callback
+  onMinimapNavigation?: (scrollPercentage: number) => void;
 }
 
 export interface TextMatch {

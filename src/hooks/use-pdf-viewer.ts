@@ -13,6 +13,8 @@ export const usePDFViewer = (pdfUrl: string) => {
     isFullscreen: false,
   });
 
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(false);
+
   const loadPDF = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }));
@@ -55,6 +57,17 @@ export const usePDFViewer = (pdfUrl: string) => {
   const goToPage = useCallback((pageNum: number) => {
     setState((prev) => {
       if (pageNum >= 1 && pageNum <= prev.totalPages) {
+        setShouldAutoScroll(true); // Enable auto-scroll for manual navigation
+        return { ...prev, currentPage: pageNum };
+      }
+      return prev;
+    });
+  }, []);
+
+  const updateCurrentPage = useCallback((pageNum: number) => {
+    setState((prev) => {
+      if (pageNum >= 1 && pageNum <= prev.totalPages) {
+        setShouldAutoScroll(false); // Disable auto-scroll for scroll detection
         return { ...prev, currentPage: pageNum };
       }
       return prev;
@@ -79,7 +92,10 @@ export const usePDFViewer = (pdfUrl: string) => {
 
   return {
     ...state,
+    shouldAutoScroll,
+    setShouldAutoScroll,
     goToPage,
+    updateCurrentPage,
     zoomIn,
     zoomOut,
     setScale,

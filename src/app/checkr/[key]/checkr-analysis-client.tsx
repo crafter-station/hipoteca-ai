@@ -635,6 +635,7 @@ function CheckrAnalysisContent({
                     instanceId={`contract-${keyParam}`}
                     highlights={memoizedHighlights}
                     onPDFViewerReady={handlePDFViewerReady}
+                    showMinimap={true}
                   />
                 </div>
               ) : status === "FAILED" ? (
