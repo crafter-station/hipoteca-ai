@@ -6,13 +6,14 @@ import {
 } from "@/actions/get-processed-contract";
 import { TriggerProvider } from "@/components/TriggerProvider";
 import { AppSidebarClient } from "@/components/app-sidebar-client";
+import { PDFHeader } from "@/components/pdf-viewer";
 import PDFViewer from "@/components/pdf-viewer/pdf-viewer";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { Contract, ContractHighlight } from "@/models/contract";
 import { ContractHighlightType } from "@/models/contract";
 import type { HighlightAnnotation, HighlightType } from "@/types/pdf-viewer";
 import { useRealtimeRun } from "@trigger.dev/react-hooks";
-import { AlertCircle, CheckCircle, FileText, Loader2, X } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -540,76 +541,16 @@ function CheckrAnalysisContent({
       <div className="flex h-screen w-full">
         <AppSidebarClient contracts={contracts} />
 
-        <div className="flex min-w-0 flex-1 flex-col bg-background p-2">
-          <SidebarTrigger variant="outline" />
+        <div className="flex min-w-0 flex-1 flex-col bg-background">
+          {/* Sticky Header with PDF Info */}
+          <PDFHeader
+            pdfName={pdfData?.name}
+            status={status}
+            isLoading={isLoadingContract}
+          />
 
-          <main className="flex-1 p-4">
+          <main className="flex-1 overflow-hidden p-2">
             <div className="flex h-full flex-col gap-4">
-              {/* PDF Header */}
-              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 p-4">
-                <div
-                  className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${
-                    status === "COMPLETED"
-                      ? "bg-green-100 dark:bg-green-900/30"
-                      : status === "FAILED" || status === "CRASHED"
-                        ? "bg-red-100 dark:bg-red-900/30"
-                        : status === "CANCELED"
-                          ? "bg-orange-100 dark:bg-orange-900/30"
-                          : status === "TIMED_OUT"
-                            ? "bg-yellow-100 dark:bg-yellow-900/30"
-                            : "bg-red-100 dark:bg-red-900/30"
-                  }`}
-                >
-                  <FileText
-                    className={`h-5 w-5 ${
-                      status === "COMPLETED"
-                        ? "text-green-600 dark:text-green-400"
-                        : status === "FAILED" || status === "CRASHED"
-                          ? "text-red-600 dark:text-red-400"
-                          : status === "CANCELED"
-                            ? "text-orange-600 dark:text-orange-400"
-                            : status === "TIMED_OUT"
-                              ? "text-yellow-600 dark:text-yellow-400"
-                              : "text-red-600 dark:text-red-400"
-                    }`}
-                  />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="truncate font-semibold text-foreground text-lg">
-                    {pdfData?.name || "Cargando..."}
-                  </h2>
-                  <div className="flex items-center gap-2">
-                    <p className="text-muted-foreground text-sm">
-                      Análisis de contrato hipotecario •
-                    </p>
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full px-2 py-1 font-medium text-xs ${
-                        status === "COMPLETED"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                          : status === "EXECUTING"
-                            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                            : status === "QUEUED"
-                              ? "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                              : status === "REATTEMPTING"
-                                ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
-                                : status === "CANCELED"
-                                  ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300"
-                                  : status === "FAILED" || status === "CRASHED"
-                                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                                    : status === "TIMED_OUT"
-                                      ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300"
-                                      : "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
-                      }`}
-                    >
-                      {status === "REATTEMPTING" && (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      )}
-                      {STATUS_MAP[status as keyof typeof STATUS_MAP] || status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
               {/* Processing Status or PDF Viewer */}
               {isCompleted && pdfData ? (
                 <div className="flex-1 overflow-hidden rounded-lg border border-border bg-background">

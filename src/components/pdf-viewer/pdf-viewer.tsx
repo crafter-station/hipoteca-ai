@@ -7,7 +7,6 @@ import { usePDFSearch } from "@/hooks/use-pdf-search";
 import { usePDFViewer } from "@/hooks/use-pdf-viewer";
 import type { PDFViewerProps } from "@/types/pdf-viewer";
 import { useCallback, useEffect, useRef } from "react";
-import { PageNavigation } from "./page-navigation";
 import { PDFCanvas } from "./pdf-canvas";
 import { SearchPanel } from "./search-panel";
 import { Toolbar } from "./toolbar";
@@ -221,13 +220,6 @@ export default function PDFViewer({
         highlightService={pdfHighlights}
         highlights={highlights}
         onNavigateToResult={handleNavigateToResult}
-      />
-
-      {/* Page Navigation */}
-      <PageNavigation
-        currentPage={pdfViewer.currentPage}
-        totalPages={pdfViewer.totalPages}
-        onPageChange={pdfViewer.goToPage}
       />
     </div>
   );

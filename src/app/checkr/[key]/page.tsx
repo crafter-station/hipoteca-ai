@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { CheckrAnalysisClient } from "./checkr-analysis-client";
 
 interface CheckrAnalysisPageProps {
-  params: { key: string };
+  params: Promise<{ key: string }>;
   searchParams: Promise<{ runId?: string; token?: string }>;
 }
 
@@ -13,6 +13,7 @@ export default async function CheckrAnalysisPage({
   params,
   searchParams,
 }: CheckrAnalysisPageProps) {
+  const { key } = await params;
   const { runId, token } = await searchParams;
   const session = await auth();
 
@@ -30,7 +31,7 @@ export default async function CheckrAnalysisPage({
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <CheckrAnalysisClient
-        keyParam={params.key}
+        keyParam={key}
         runId={runId || null}
         token={token || null}
         contracts={contracts}
