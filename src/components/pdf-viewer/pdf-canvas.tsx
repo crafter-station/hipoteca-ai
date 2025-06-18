@@ -15,6 +15,7 @@ import type {
   TooltipData,
 } from "@/types/pdf-viewer";
 import { useEffect, useRef, useState } from "react";
+import { TextSelectionPopup } from "./text-selection-popup";
 
 // PDF.js types
 interface PDFDocument {
@@ -99,6 +100,8 @@ interface PDFCanvasProps {
   onNavigateToResult: (index: number) => void;
   // Callback to report page highlight data for minimap
   onPageHighlightData?: (data: Map<number, { annotations: Array<{ type: string; position: number }>; searchResults: Array<{ position: number }> }>) => void;
+  // Callback for text selection questions
+  onTextSelectionQuestion?: (question: string, selectedText: string) => Promise<void>;
 }
 
 const DEBUG = false;
@@ -122,6 +125,7 @@ export function PDFCanvas({
   highlights,
   onNavigateToResult,
   onPageHighlightData,
+  onTextSelectionQuestion,
 }: PDFCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<
@@ -139,6 +143,21 @@ export function PDFCanvas({
   // Track page highlight data for minimap
   const pageHighlightDataRef = useRef<Map<number, { annotations: Array<{ type: string; position: number }>; searchResults: Array<{ position: number }> }>>(new Map());
   const [highlightDataVersion, setHighlightDataVersion] = useState(0);
+
+  // Text selection state
+  const [textSelection, setTextSelection] = useState<{
+    text: string;
+    position: { x: number; y: number };
+    range?: Range;
+  } | null>(null);
+  const [isQuestionLoading, setIsQuestionLoading] = useState(false);
+
+  // Temporary highlight state
+  const [temporaryHighlight, setTemporaryHighlight] = useState<{
+    id: string;
+    range: Range;
+    text: string;
+  } | null>(null);
 
   // Track render tasks to cancel them if needed
   const renderTasksRef = useRef<Map<number, { promise: Promise<void>; cancel: () => void }>>(new Map());
@@ -881,6 +900,266 @@ export function PDFCanvas({
     return classMap[type] || "highlight-term";
   };
 
+  // Handle text selection
+  // Create temporary highlight using a more robust approach
+  const createTemporaryHighlight = (range: Range, text: string): string => {
+    const highlightId = `temp-highlight-${Date.now()}`;
+
+    try {
+      // Clone the range to avoid modifying the original selection
+      const clonedRange = range.cloneRange();
+
+      // Get all text nodes in the range
+      const walker = document.createTreeWalker(
+        clonedRange.commonAncestorContainer,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: (node) => {
+            // Check if this text node intersects with our range
+            const nodeRange = document.createRange();
+            nodeRange.selectNodeContents(node);
+
+            return clonedRange.intersectsNode(node)
+              ? NodeFilter.FILTER_ACCEPT
+              : NodeFilter.FILTER_REJECT;
+          }
+        }
+      );
+
+      const textNodes: Text[] = [];
+      let node: Text | null;
+      while ((node = walker.nextNode() as Text)) {
+        textNodes.push(node);
+      }
+
+      if (textNodes.length === 0) {
+        console.warn("No text nodes found in range");
+        return '';
+      }
+
+      // Create highlight spans for each text node segment
+      const highlightSpans: HTMLElement[] = [];
+
+      textNodes.forEach((textNode, index) => {
+        const nodeRange = document.createRange();
+        nodeRange.selectNodeContents(textNode);
+
+        // Calculate intersection with our selection range
+        const startOffset = textNode === clonedRange.startContainer
+          ? Math.max(0, clonedRange.startOffset)
+          : 0;
+        const endOffset = textNode === clonedRange.endContainer
+          ? Math.min(textNode.textContent?.length || 0, clonedRange.endOffset)
+          : textNode.textContent?.length || 0;
+
+        if (startOffset < endOffset) {
+          // Split the text node and wrap the middle part
+          const beforeText = textNode.textContent?.substring(0, startOffset) || '';
+          const highlightText = textNode.textContent?.substring(startOffset, endOffset) || '';
+          const afterText = textNode.textContent?.substring(endOffset) || '';
+
+          const parent = textNode.parentNode;
+          if (parent) {
+            // Create highlight span
+            const highlightSpan = document.createElement('span');
+            highlightSpan.setAttribute('data-temp-highlight', highlightId);
+            highlightSpan.setAttribute('data-temp-highlight-part', index.toString());
+
+            // Use inline styles to ensure visibility - bright yellow for maximum visibility
+            highlightSpan.style.backgroundColor = 'rgba(255, 255, 0, 0.6)'; // bright yellow
+            highlightSpan.style.border = '1px solid rgba(255, 193, 7, 0.8)'; // amber border
+            highlightSpan.style.borderRadius = '2px';
+            highlightSpan.style.padding = '1px 2px';
+            highlightSpan.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+            highlightSpan.style.transition = 'all 0.2s ease-in-out';
+            highlightSpan.style.display = 'inline';
+            highlightSpan.style.position = 'relative';
+            highlightSpan.style.zIndex = '10';
+
+            highlightSpan.textContent = highlightText;
+
+            // Replace the original text node with the split parts
+            if (beforeText) {
+              parent.insertBefore(document.createTextNode(beforeText), textNode);
+            }
+            parent.insertBefore(highlightSpan, textNode);
+            if (afterText) {
+              parent.insertBefore(document.createTextNode(afterText), textNode);
+            }
+            parent.removeChild(textNode);
+
+            highlightSpans.push(highlightSpan);
+
+            console.log("🎨 HIGHLIGHT SPAN CREATED:", {
+              part: index,
+              text: highlightText,
+              backgroundColor: highlightSpan.style.backgroundColor,
+              element: highlightSpan,
+              parent: parent.nodeName,
+              isConnected: highlightSpan.isConnected
+            });
+          }
+        }
+      });
+
+      console.log("✨ TEMPORARY HIGHLIGHT CREATED:", {
+        highlightId,
+        text,
+        spans: highlightSpans.length
+      });
+
+      // Verify highlights are in DOM
+      setTimeout(() => {
+        const verifyElements = document.querySelectorAll(`[data-temp-highlight="${highlightId}"]`);
+        console.log("🔍 HIGHLIGHT VERIFICATION:", {
+          highlightId,
+          expectedSpans: highlightSpans.length,
+          foundInDOM: verifyElements.length,
+          elements: Array.from(verifyElements).map(el => ({
+            text: el.textContent,
+            styles: {
+              backgroundColor: (el as HTMLElement).style.backgroundColor,
+              border: (el as HTMLElement).style.border,
+              display: (el as HTMLElement).style.display
+            },
+            isVisible: (el as HTMLElement).offsetParent !== null
+          }))
+        });
+      }, 100);
+
+      return highlightId;
+    } catch (error) {
+      console.error("Error creating temporary highlight:", error);
+      return '';
+    }
+  };
+
+  // Remove temporary highlight
+  const removeTemporaryHighlight = (highlightId: string) => {
+    const highlightElements = document.querySelectorAll(`[data-temp-highlight="${highlightId}"]`);
+
+    if (highlightElements.length > 0) {
+      highlightElements.forEach((highlightElement) => {
+        // Replace the highlight span with its text content
+        const parent = highlightElement.parentNode;
+        if (parent) {
+          parent.replaceChild(document.createTextNode(highlightElement.textContent || ''), highlightElement);
+        }
+      });
+
+      // Normalize all affected parents to merge adjacent text nodes
+      const parents = new Set<Node>();
+      highlightElements.forEach((element) => {
+        if (element.parentNode) {
+          parents.add(element.parentNode);
+        }
+      });
+
+      parents.forEach((parent) => {
+        if (parent.normalize) {
+          parent.normalize();
+        }
+      });
+
+      console.log("🗑️ TEMPORARY HIGHLIGHT REMOVED:", {
+        highlightId,
+        spans: highlightElements.length
+      });
+    }
+  };
+
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed) {
+      console.log("❌ NO VALID SELECTION - ignoring");
+      return;
+    }
+
+    const selectedText = selection.toString().trim();
+    if (selectedText.length < 3) {
+      console.log("❌ SELECTION TOO SHORT - ignoring");
+      return;
+    }
+
+    console.log("📝 TEXT SELECTION:", { selectedText, length: selectedText.length });
+
+    // Get the position of the selection
+    const range = selection.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+
+    console.log("📍 SELECTION POSITION:", { rect, scrollX: window.scrollX, scrollY: window.scrollY });
+
+    // Create temporary highlight
+    const highlightId = createTemporaryHighlight(range, selectedText);
+
+    // Clear the selection since we now have a visual highlight
+    selection.removeAllRanges();
+
+    // Position the popup near the selection
+    const position = {
+      x: rect.left + window.scrollX,
+      y: rect.bottom + window.scrollY + 10, // 10px below the selection
+    };
+
+    setTextSelection({
+      text: selectedText,
+      position,
+      range: range.cloneRange(),
+    });
+
+    setTemporaryHighlight({
+      id: highlightId,
+      range: range.cloneRange(),
+      text: selectedText,
+    });
+
+    console.log("✅ TEXT SELECTION SET:", { text: selectedText, position, highlightId });
+  };
+
+  // Handle question submission
+  const handleQuestionSubmit = async (question: string, selectedText: string) => {
+    if (!onTextSelectionQuestion) return;
+
+    console.log("📤 SUBMITTING QUESTION:", { question, selectedText });
+    setIsQuestionLoading(true);
+    try {
+      await onTextSelectionQuestion(question, selectedText);
+
+      // Convert temporary highlight to permanent highlight
+      if (temporaryHighlight) {
+        // Remove the temporary highlight
+        removeTemporaryHighlight(temporaryHighlight.id);
+
+        // TODO: Add permanent highlight with tooltip
+        // This would integrate with the existing highlight system
+        console.log("🔄 CONVERTING TO PERMANENT HIGHLIGHT:", {
+          text: selectedText,
+          question,
+          highlightId: temporaryHighlight.id
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting question:", error);
+    } finally {
+      setIsQuestionLoading(false);
+      setTextSelection(null);
+      setTemporaryHighlight(null);
+    }
+  };
+
+  // Close text selection popup
+  const closeTextSelection = () => {
+    console.log("🚫 CLOSING TEXT SELECTION");
+
+    // Remove temporary highlight if it exists
+    if (temporaryHighlight) {
+      removeTemporaryHighlight(temporaryHighlight.id);
+    }
+
+    setTextSelection(null);
+    setTemporaryHighlight(null);
+  };
+
   // Report page highlight data to parent when it changes
   useEffect(() => {
     if (onPageHighlightData) {
@@ -979,100 +1258,168 @@ export function PDFCanvas({
     }
   }, [currentPage, shouldAutoScroll, onAutoScrollComplete]);
 
-  return (
-    <div ref={containerRef} className="flex-1 overflow-auto bg-muted px-4 py-8">
-      <div className="flex flex-col items-center space-y-8">
-        {Array.from({ length: totalPages }, (_, index) => {
-          const pageNum = index + 1;
-          return (
-            <div key={pageNum} className="relative">
-              {/* Page number indicator */}
-              <div className="-top-6 absolute left-0 font-medium text-muted-foreground text-sm">
-                Page {pageNum}
-              </div>
+  // Add text selection listener
+  useEffect(() => {
+    if (!onTextSelectionQuestion) return;
 
-              {/* This div is the positioning parent for highlights */}
-              <div
-                ref={(el) => {
-                  if (el) {
-                    const existing = pageRefs.current.get(pageNum);
-                    if (existing) {
-                      existing.container = el;
-                    } else {
-                      // We'll set canvas and textLayer when we create them
-                      pageRefs.current.set(pageNum, {
-                        container: el,
-                        canvas: null as any,
-                        textLayer: null as any,
-                      });
-                    }
-                  }
-                }}
-                className="relative max-w-full bg-card shadow-lg"
-                style={{
-                  lineHeight: "0",
-                  margin: "0px",
-                  padding: "0px",
-                  border: "none",
-                }}
-              >
-                <canvas
-                  ref={(el) => {
-                    if (el) {
-                      const existing = pageRefs.current.get(pageNum);
-                      if (existing) {
-                        existing.canvas = el;
-                      } else {
-                        pageRefs.current.set(pageNum, {
-                          canvas: el,
-                          textLayer: null as any,
-                          container: null as any,
-                        });
-                      }
-                    }
-                  }}
-                  className="block h-auto max-w-full"
-                  style={{
-                    maxWidth: "100%",
-                    height: "auto",
-                    display: "block",
-                    margin: "0px",
-                    padding: "0px",
-                    border: "none",
-                  }}
-                />
-                {/* Text layer for selection, highlights will be appended here too */}
+    // Only use mouseup to detect when user finishes selecting
+    const handleMouseUp = (event: MouseEvent) => {
+      console.log("🖱️ MOUSE UP EVENT");
+
+      // Don't trigger if the mouseup is inside the text selection popup
+      const target = event.target as HTMLElement;
+      const isInsidePopup = target.closest('[data-text-selection-popup]');
+      if (isInsidePopup) {
+        console.log("🚫 MOUSE UP INSIDE POPUP - ignoring");
+        return;
+      }
+
+      // Only handle if the mouseup happened within our PDF container
+      if (containerRef.current?.contains(target)) {
+        // Delay to ensure selection is complete and stable
+        setTimeout(() => {
+          const selection = window.getSelection();
+          console.log("🔍 CHECKING SELECTION ON MOUSE UP:", {
+            selection: selection?.toString(),
+            isCollapsed: selection?.isCollapsed,
+            rangeCount: selection?.rangeCount,
+          });
+
+          // Check if the selection is within our PDF container
+          if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const selectionContainer = range.commonAncestorContainer;
+            const isSelectionInPDF = containerRef.current?.contains(
+              selectionContainer.nodeType === Node.TEXT_NODE
+                ? selectionContainer.parentElement
+                : selectionContainer as HTMLElement
+            );
+
+            if (isSelectionInPDF && selection.toString().trim().length >= 3) {
+              console.log("✅ VALID PDF SELECTION DETECTED");
+              handleTextSelection();
+            } else {
+              console.log("❌ SELECTION NOT IN PDF OR TOO SHORT");
+            }
+          }
+        }, 200); // Longer delay to ensure user has finished selecting
+      }
+    };
+
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [onTextSelectionQuestion]);
+
+  return (
+    <>
+      <div ref={containerRef} className="flex-1 overflow-auto bg-muted px-4 py-8">
+        <div className="flex flex-col items-center space-y-8">
+          {Array.from({ length: totalPages }, (_, index) => {
+            const pageNum = index + 1;
+            return (
+              <div key={pageNum} className="relative">
+                {/* Page number indicator */}
+                <div className="-top-6 absolute left-0 font-medium text-muted-foreground text-sm">
+                  Page {pageNum}
+                </div>
+
+                {/* This div is the positioning parent for highlights */}
                 <div
                   ref={(el) => {
                     if (el) {
                       const existing = pageRefs.current.get(pageNum);
                       if (existing) {
-                        existing.textLayer = el;
+                        existing.container = el;
                       } else {
+                        // We'll set canvas and textLayer when we create them
                         pageRefs.current.set(pageNum, {
-                          textLayer: el,
+                          container: el,
                           canvas: null as any,
-                          container: null as any,
+                          textLayer: null as any,
                         });
                       }
                     }
                   }}
-                  className="pointer-events-auto absolute overflow-hidden"
+                  className="relative max-w-full bg-card shadow-lg"
                   style={{
-                    userSelect: "text",
-                    left: "0px",
-                    top: "0px",
-                    right: "0px",
-                    bottom: "0px",
+                    lineHeight: "0",
                     margin: "0px",
                     padding: "0px",
+                    border: "none",
                   }}
-                />
+                >
+                  <canvas
+                    ref={(el) => {
+                      if (el) {
+                        const existing = pageRefs.current.get(pageNum);
+                        if (existing) {
+                          existing.canvas = el;
+                        } else {
+                          pageRefs.current.set(pageNum, {
+                            canvas: el,
+                            textLayer: null as any,
+                            container: null as any,
+                          });
+                        }
+                      }
+                    }}
+                    className="block h-auto max-w-full"
+                    style={{
+                      maxWidth: "100%",
+                      height: "auto",
+                      display: "block",
+                      margin: "0px",
+                      padding: "0px",
+                      border: "none",
+                    }}
+                  />
+                  {/* Text layer for selection, highlights will be appended here too */}
+                  <div
+                    ref={(el) => {
+                      if (el) {
+                        const existing = pageRefs.current.get(pageNum);
+                        if (existing) {
+                          existing.textLayer = el;
+                        } else {
+                          pageRefs.current.set(pageNum, {
+                            textLayer: el,
+                            canvas: null as any,
+                            container: null as any,
+                          });
+                        }
+                      }
+                    }}
+                    className="pointer-events-auto absolute overflow-hidden"
+                    style={{
+                      userSelect: "text",
+                      left: "0px",
+                      top: "0px",
+                      right: "0px",
+                      bottom: "0px",
+                      margin: "0px",
+                      padding: "0px",
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
-    </div>
+
+      {/* Text Selection Popup */}
+      {textSelection && onTextSelectionQuestion && (
+        <TextSelectionPopup
+          selectedText={textSelection.text}
+          position={textSelection.position}
+          onClose={closeTextSelection}
+          onSubmitQuestion={handleQuestionSubmit}
+          isLoading={isQuestionLoading}
+        />
+      )}
+    </>
   );
 }

@@ -59,6 +59,11 @@ export interface PDFViewerProps {
   showMinimap?: boolean;
   // Minimap navigation callback
   onMinimapNavigation?: (scrollPercentage: number) => void;
+  // Text selection callback
+  onTextSelectionQuestion?: (
+    question: string,
+    selectedText: string,
+  ) => Promise<void>;
 }
 
 export interface TextMatch {
@@ -121,6 +126,18 @@ export interface HighlightAnnotation {
   sentence: string;
   type: HighlightType;
   tooltip: string;
+}
+
+export interface TemporaryHighlight {
+  text: string;
+  range: Range;
+  id: string;
+}
+
+export interface TextSelectionData {
+  text: string;
+  position: { x: number; y: number };
+  range?: Range;
 }
 
 // Import the shared type from constants

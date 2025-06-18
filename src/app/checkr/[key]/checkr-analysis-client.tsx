@@ -317,6 +317,43 @@ function CheckrAnalysisContent({
     [],
   );
 
+  // Handle text selection questions
+  const handleTextSelectionQuestion = useCallback(
+    async (question: string, selectedText: string) => {
+      // For now, just log the question - you can integrate with your chat/AI system here
+      console.log("Text selection question:", { question, selectedText });
+
+      // You could integrate this with your chat system, for example:
+      // - Create a new chat session with the selected text as context
+      // - Send the question to your AI service
+      // - Show the response in a toast or modal
+
+      // Example integration (uncomment and modify as needed):
+      /*
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question,
+          context: selectedText,
+          contractId: contract?.id,
+        }),
+      });
+      
+      const result = await response.json();
+      toast.success("Pregunta enviada exitosamente");
+      // Handle the response as needed
+    } catch (error) {
+      toast.error("Error enviando la pregunta");
+    }
+    */
+
+      toast.success("Pregunta recibida. Funcionalidad en desarrollo.");
+    },
+    [],
+  );
+
   // Set PDF data based on key
   useEffect(() => {
     if (keyParam) {
@@ -637,6 +674,7 @@ function CheckrAnalysisContent({
                     instanceId={`contract-${keyParam}`}
                     highlights={memoizedHighlights}
                     onPDFViewerReady={handlePDFViewerReady}
+                    onTextSelectionQuestion={handleTextSelectionQuestion}
                     showMinimap={true}
                   />
                 </div>

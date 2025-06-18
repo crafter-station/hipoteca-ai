@@ -43,6 +43,8 @@ export default function PDFViewer({
   // Minimap control
   showMinimap = true,
   onMinimapNavigation,
+  // Text selection callback
+  onTextSelectionQuestion,
 }: PDFViewerProps) {
   console.log({ highlights, pdfUrl, instanceId });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -339,6 +341,7 @@ export default function PDFViewer({
           highlights={highlights}
           onNavigateToResult={handleNavigateToResult}
           onPageHighlightData={handlePageHighlightData}
+          onTextSelectionQuestion={onTextSelectionQuestion}
         />
       </div>
 
