@@ -35,6 +35,7 @@ interface CheckrAnalysisClientProps {
 const PROGRESS_STAGES = {
   extract_content: "Extrayendo contenido del PDF",
   extract_highlights: "Analizando cláusulas importantes",
+  extract_summary: "Generando resumen financiero",
   store_contract_context: "Guardando contexto del contrato",
   completed: "Análisis de hipoteca completado",
 };
@@ -157,6 +158,12 @@ function TaskStatusIcon({ status }: { status: string }) {
     return <Loader2 className="h-4.5 w-4.5 animate-spin text-primary" />;
   }
 
+  if (status === "PENDING") {
+    return (
+      <div className="h-4.5 w-4.5 rounded-full border-2 border-muted-foreground/30" />
+    );
+  }
+
   return null;
 }
 
@@ -275,6 +282,7 @@ function CheckrAnalysisContent({
   router: ReturnType<typeof useRouter>;
   contracts: Contract[];
 }) {
+  console.log({ contract });
   const [isLoadingContract, setIsLoadingContract] = useState(!runId); // Start loading if no runId
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
 
@@ -410,6 +418,7 @@ function CheckrAnalysisContent({
       const progressMessages = {
         extract_content: "📄 Extrayendo contenido del PDF...",
         extract_highlights: "🔍 Analizando cláusulas importantes...",
+        extract_summary: "📊 Generando resumen financiero...",
         store_contract_context: "💾 Guardando análisis...",
         completed: "✅ Análisis completado",
       };
@@ -635,7 +644,7 @@ function CheckrAnalysisContent({
   }
 
   // Determine current status and stage
-  const currentStage = (run?.metadata?.progress as string) || "completed";
+  const currentStage = (run?.metadata?.progress as string) || null;
   const status = run?.status || (contract ? "COMPLETED" : "PENDING");
   const isCompleted =
     (status === "COMPLETED" && contract) || (!runId && contract);
@@ -673,6 +682,7 @@ function CheckrAnalysisContent({
                     className="h-full w-full"
                     instanceId={`contract-${keyParam}`}
                     highlights={memoizedHighlights}
+                    contract={contract}
                     onPDFViewerReady={handlePDFViewerReady}
                     onTextSelectionQuestion={handleTextSelectionQuestion}
                     showMinimap={true}
@@ -767,15 +777,34 @@ function CheckrAnalysisContent({
                         <div className="space-y-3">
                           {Object.entries(PROGRESS_STAGES).map(
                             ([stage, description]) => {
+                              // If no currentStage (task in queue, not started, or just started executing), all tasks are pending
+                              if (!currentStage || status === "QUEUED") {
+                                return (
+                                  <div
+                                    key={stage}
+                                    className="flex items-center justify-between rounded-md bg-muted/50 p-3 text-muted-foreground transition-colors"
+                                  >
+                                    <div>
+                                      <p className="font-medium text-sm">
+                                        {description}
+                                      </p>
+                                      <p className="text-xs opacity-80">
+                                        Pendiente
+                                      </p>
+                                    </div>
+                                    <TaskStatusIcon status="PENDING" />
+                                  </div>
+                                );
+                              }
+
+                              const stageKeys = Object.keys(PROGRESS_STAGES);
+                              const currentStageIndex =
+                                stageKeys.indexOf(currentStage);
+                              const thisStageIndex = stageKeys.indexOf(stage);
+
                               const isCompleted =
                                 currentStage === "completed" ||
-                                (currentStage &&
-                                  Object.keys(PROGRESS_STAGES).indexOf(
-                                    currentStage,
-                                  ) >
-                                    Object.keys(PROGRESS_STAGES).indexOf(
-                                      stage,
-                                    ));
+                                currentStageIndex > thisStageIndex;
 
                               const isCurrent = currentStage === stage;
                               const isRetrying =

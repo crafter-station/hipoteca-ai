@@ -8,6 +8,7 @@ import { logger, metadata, schemaTask } from "@trigger.dev/sdk/v3";
 import { z } from "zod";
 import { extractContentFromPdf } from "./extract-content";
 import { extractHighlightsFromContent } from "./extract-highlights";
+import { extractSummaryFromContent } from "./extract-summary";
 import { storeContractContext } from "./store-contract-context";
 
 export const processPDFTask = schemaTask({
@@ -39,6 +40,11 @@ export const processPDFTask = schemaTask({
       logger.info("extracting highlights from pdf");
       const highlights = await extractHighlightsFromContent(chunks);
 
+      // Update progress: extracting summary
+      metadata.set("progress", "extract_summary");
+      logger.info("extracting summary from pdf");
+      const summary = await extractSummaryFromContent(chunks);
+
       const document: Contract = {
         id: nanoid(),
         userId: userId,
@@ -48,6 +54,7 @@ export const processPDFTask = schemaTask({
         markdownContent: markdown,
         chunks,
         highlights,
+        summary,
         createdAt: new Date(),
       };
 

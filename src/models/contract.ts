@@ -1,4 +1,5 @@
 import { redis } from "@/clients/redis";
+import type { ContractSummary } from "@/triggers/process-pdf/extract-summary";
 import { getContractKey, getUserContractsKey } from "./constants";
 import type { ContractContextChunk } from "./contract-context";
 
@@ -11,6 +12,7 @@ export interface Contract {
   markdownContent: string;
   chunks: ContractContextChunk[];
   highlights: ContractHighlight[];
+  summary?: ContractSummary;
   createdAt: Date;
 }
 
@@ -60,6 +62,7 @@ export async function saveContract(contract: Contract) {
       markdownContent: contract.markdownContent,
       highlights: contract.highlights,
       chunks: contract.chunks,
+      summary: contract.summary ? JSON.stringify(contract.summary) : "",
       createdAt: contract.createdAt.toISOString(),
     });
 
@@ -71,6 +74,58 @@ export async function saveContract(contract: Contract) {
     console.error("Error saving mortgage to Redis:", error);
     throw error;
   }
+}
+
+// Helper function to safely parse JSON arrays
+function safeJsonParseArray<T>(value: unknown): T[] {
+  if (!value) return [];
+
+  // If it's already an array, return it
+  if (Array.isArray(value)) {
+    return value as T[];
+  }
+
+  // If it's a string, try to parse it
+  if (typeof value === "string") {
+    // If it's an empty string, return empty array
+    if (value.trim() === "") return [];
+
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      console.error("Failed to parse JSON array:", value, error);
+      return [];
+    }
+  }
+
+  return [];
+}
+
+// Helper function to safely parse JSON objects
+function safeJsonParseObject<T>(value: unknown): T | undefined {
+  if (!value) return undefined;
+
+  // If it's already an object, return it
+  if (typeof value === "object" && value !== null) {
+    return value as T;
+  }
+
+  // If it's a string, try to parse it
+  if (typeof value === "string") {
+    // If it's an empty string, return undefined
+    if (value.trim() === "") return undefined;
+
+    try {
+      const parsed = JSON.parse(value);
+      return typeof parsed === "object" ? parsed : undefined;
+    } catch (error) {
+      console.error("Failed to parse JSON object:", value, error);
+      return undefined;
+    }
+  }
+
+  return undefined;
 }
 
 export async function getContractById(id: string): Promise<Contract | null> {
@@ -89,8 +144,9 @@ export async function getContractById(id: string): Promise<Contract | null> {
       pdfName: data.pdfName as string,
       htmlContent: data.htmlContent as string,
       markdownContent: data.markdownContent as string,
-      chunks: data.chunks as [],
-      highlights: data.highlights as [],
+      chunks: safeJsonParseArray<ContractContextChunk>(data.chunks),
+      highlights: safeJsonParseArray<ContractHighlight>(data.highlights),
+      summary: safeJsonParseObject<ContractSummary>(data.summary),
       createdAt: new Date(data.createdAt as string),
     };
   } catch (error) {

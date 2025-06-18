@@ -32,6 +32,8 @@ export interface PDFViewerProps {
   className?: string;
   instanceId?: string;
   highlights?: HighlightAnnotation[];
+  // Contract data for summary
+  contract?: Contract;
   // Toolbar functions for external header
   onPreviousPage?: () => void;
   onNextPage?: () => void;
@@ -142,4 +144,5 @@ export interface TextSelectionData {
 
 // Import the shared type from constants
 import type { HighlightType } from "@/lib/constants/legend-items";
+import type { Contract } from "@/models/contract";
 export type { HighlightType };
