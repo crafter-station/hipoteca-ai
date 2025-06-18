@@ -6,8 +6,6 @@ import { usePDFHighlights } from "@/hooks/use-pdf-highlights";
 import { usePDFSearch } from "@/hooks/use-pdf-search";
 import { usePDFViewer } from "@/hooks/use-pdf-viewer";
 import type { PDFViewerProps } from "@/types/pdf-viewer";
-import { useCompletion } from "@ai-sdk/react";
-import { Sparkles } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PDFCanvas } from "./pdf-canvas";
@@ -32,102 +30,6 @@ declare global {
     };
     [key: `navigateToResult_${string}`]: (index: number) => void;
   }
-}
-
-// useCompletion from ai-sdk
-const useExplainSelection = () =>
-  useCompletion({
-    api: "/api/explain",
-  });
-
-// Utilidad para extraer <explanation> y <sources> del string de respuesta
-function parseExplanationAndSources(content: string): {
-  explanation: string;
-  sources: { name: string; pages: number[] }[];
-} {
-  const explanationMatch = content.match(
-    /<explanation>([\s\S]*?)<\/explanation>/,
-  );
-  const sourcesMatch = content.match(/<sources>([\s\S]*?)<\/sources>/);
-  const explanation = explanationMatch ? explanationMatch[1].trim() : content;
-  const sources: { name: string; pages: number[] }[] = [];
-  if (sourcesMatch) {
-    const sourcesXml = sourcesMatch[1];
-    const sourceMatches = sourcesXml.matchAll(/<source>([\s\S]*?)<\/source>/g);
-    for (const match of sourceMatches) {
-      const sourceXml = match[1];
-      const nameMatch = sourceXml.match(/<name>([\s\S]*?)<\/name>/);
-      const pagesMatch = sourceXml.match(/<pages>([\s\S]*?)<\/pages>/);
-      if (nameMatch && pagesMatch) {
-        const pages =
-          pagesMatch[1]
-            .match(/<page>(\d+)<\/page>/g)
-            ?.map((p) =>
-              Number.parseInt(p.replace(/<page>(\d+)<\/page>/, "$1"), 10),
-            ) || [];
-        sources.push({ name: nameMatch[1].trim(), pages });
-      }
-    }
-  }
-  return { explanation, sources };
-}
-
-function SourcesBox({
-  sources,
-}: { sources: { name: string; pages: number[] }[] }) {
-  if (!sources.length) return null;
-  const mortgagePdf =
-    "https://www.bde.es/f/webbde/Secciones/Publicaciones/Folletos/Fic/Guia_hipotecaria_2013.pdf";
-  const contractDoc =
-    "https://o6dbw19iyd.ufs.sh/f/dgFwWFXCXZVhT5Loy8B7YUFvSi8RlzkwVJnbZ6ypt93rXGOs";
-  return (
-    <div className="mt-3 rounded-md border border-gray-400 border-dotted bg-muted/60 p-2 text-muted-foreground text-xs dark:border-green-700 dark:text-green-400">
-      <div className="mb-1 font-bold text-[0.7rem] text-gray-700 uppercase tracking-widest dark:text-green-400">
-        Referencias
-      </div>
-      <div className="space-y-1">
-        {sources.map((source, i) => {
-          let link: string | null = null;
-          if (source.name === "Mortgage Knowledge" && source.pages.length > 0) {
-            link = `${mortgagePdf}#page=${source.pages[0]}`;
-          } else if (source.name === "Contract Context") {
-            link = `${contractDoc}#page=${source.pages[0]}`;
-          }
-          return (
-            <div
-              key={`${source.name}-${source.pages.join("-")}`}
-              className="flex items-baseline gap-2"
-            >
-              <span className="inline-block min-w-[1.5em] text-center font-bold text-green-700 dark:text-green-400">
-                {i + 1}.
-              </span>
-              <span className="flex items-center gap-1">
-                {source.name === "Mortgage Knowledge"
-                  ? "Guía Hipotecaria del Banco de España"
-                  : "Tu contrato hipotecario"}
-                {link && (
-                  <a
-                    href={link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-1 text-green-700 hover:underline dark:text-green-400"
-                    title="Abrir documento de referencia"
-                  >
-                    <span style={{ fontSize: "1em", verticalAlign: "middle" }}>
-                      🔗
-                    </span>
-                  </a>
-                )}
-              </span>
-              <span className="ml-2 text-[0.9em] text-gray-500 dark:text-green-700">
-                Páginas: {source.pages.join(", ")}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
 
 export default function PDFViewer({
@@ -171,14 +73,6 @@ export default function PDFViewer({
       }
     >
   >(new Map());
-
-  // State for explain popup
-  const [explainPopup, setExplainPopup] = useState<{
-    text: string;
-    pageIndex: number;
-    position: { x: number; y: number };
-  } | null>(null);
-  const explainCompletion = useExplainSelection();
 
   // Custom hooks
   const pdfViewer = usePDFViewer(pdfUrl);
@@ -445,37 +339,6 @@ export default function PDFViewer({
     pdfViewer.updateCurrentPage,
   ]);
 
-  // Handler for text selection
-  useEffect(() => {
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    (window as any).onPDFTextSelect = (text: string, pageIndex: number) => {
-      // Get mouse position for popup
-      const sel = window.getSelection();
-      let x = 0;
-      let y = 0;
-      if (sel && sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        x = rect.left + window.scrollX;
-        y = rect.bottom + window.scrollY;
-      }
-      setExplainPopup({ text, pageIndex, position: { x, y } });
-      explainCompletion.complete(text, {
-        body: { pageIndex, contractId: key },
-      });
-    };
-    return () => {
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      (window as any).onPDFTextSelect = undefined;
-    };
-  }, [explainCompletion, key]);
-
-  // Handler to close popup
-  const closeExplainPopup = () => {
-    setExplainPopup(null);
-    explainCompletion.setCompletion("");
-  };
-
   if (pdfViewer.loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -574,70 +437,6 @@ export default function PDFViewer({
           }}
           className="w-32 flex-shrink-0"
         />
-      )}
-
-      {/* Explain Popup */}
-      {explainPopup && (
-        <div
-          className="fade-in-0 fixed z-50 min-w-[260px] max-w-md scale-in-95 animate-in rounded-xl border border-border bg-popover p-0 shadow-xl"
-          style={{
-            left: explainPopup.position.x,
-            top: explainPopup.position.y,
-          }}
-        >
-          <div className="flex items-center gap-2 rounded-t-xl border-border border-b bg-gradient-to-r from-primary/10 to-popover px-4 pt-4 pb-1">
-            <Sparkles className="mr-1 size-5 text-primary" />
-            <span className="font-semibold text-base text-primary">
-              Explicación AI
-            </span>
-            <button
-              type="button"
-              className="ml-auto rounded-full p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              onClick={closeExplainPopup}
-              aria-label="Cerrar"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 20 20"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M6 6l8 8M6 14L14 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          </div>
-          <div className="min-h-[40px] whitespace-pre-line px-4 py-3 text-muted-foreground text-sm">
-            {(() => {
-              const content = explainCompletion.completion || "";
-              const { explanation, sources } =
-                parseExplanationAndSources(content);
-              if (explainCompletion.isLoading && !content) {
-                return (
-                  <div className="mb-2 animate-pulse font-medium text-primary">
-                    Buscando información…
-                  </div>
-                );
-              }
-              return (
-                <>
-                  {explanation}
-                  <SourcesBox sources={sources} />
-                </>
-              );
-            })()}
-            {explainCompletion.error && (
-              <div className="mt-2 text-destructive">
-                {explainCompletion.error.message}
-              </div>
-            )}
-          </div>
-        </div>
       )}
     </div>
   );

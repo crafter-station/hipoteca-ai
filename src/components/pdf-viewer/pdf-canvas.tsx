@@ -16,6 +16,8 @@ import type {
 } from "@/types/pdf-viewer";
 import { useEffect, useRef, useState } from "react";
 import { TextSelectionPopup } from "./text-selection-popup";
+import { useCompletion } from "@ai-sdk/react";
+import { useParams } from "next/navigation";
 
 // PDF.js types
 interface PDFDocument {
@@ -108,6 +110,8 @@ const DEBUG = false;
 const ANNOTATION_DEBUG = false; // Disable verbose logging for now
 const TOOLTIP_DEBUG = false; // Focus on tooltip generation
 
+
+
 export function PDFCanvas({
   pdf,
   currentPage,
@@ -140,6 +144,14 @@ export function PDFCanvas({
   >(new Map());
   const [totalPages, setTotalPages] = useState(0);
 
+  // Get contract key from params
+  const { key } = useParams<{ key: string }>();
+
+  // Use explain completion hook
+  const explainCompletion = useCompletion({
+    api: "/api/explain",
+  });
+
   // Track page highlight data for minimap
   const pageHighlightDataRef = useRef<Map<number, { annotations: Array<{ type: string; position: number }>; searchResults: Array<{ position: number }> }>>(new Map());
   const [highlightDataVersion, setHighlightDataVersion] = useState(0);
@@ -150,7 +162,6 @@ export function PDFCanvas({
     position: { x: number; y: number };
     range?: Range;
   } | null>(null);
-  const [isQuestionLoading, setIsQuestionLoading] = useState(false);
 
   // Temporary highlight state
   const [temporaryHighlight, setTemporaryHighlight] = useState<{
@@ -1118,32 +1129,43 @@ export function PDFCanvas({
 
   // Handle question submission
   const handleQuestionSubmit = async (question: string, selectedText: string) => {
-    if (!onTextSelectionQuestion) return;
-
     console.log("📤 SUBMITTING QUESTION:", { question, selectedText });
-    setIsQuestionLoading(true);
+
     try {
-      await onTextSelectionQuestion(question, selectedText);
+      // Find the page index where the text was selected
+      let pageIndex = 1; // Default to page 1
+      if (temporaryHighlight?.range) {
+        // Try to find which page the selection is on
+        const pageContainers = containerRef.current?.querySelectorAll('[data-page-number]');
+        pageContainers?.forEach((container, index) => {
+          if (container.contains(temporaryHighlight.range.commonAncestorContainer) ||
+            container.contains(temporaryHighlight.range.commonAncestorContainer.parentElement)) {
+            pageIndex = index + 1;
+          }
+        });
+      }
+
+      // Call the explain API with the question and context
+      await explainCompletion.complete(selectedText, {
+        body: { pageIndex, contractId: key },
+      });
 
       // Convert temporary highlight to permanent highlight
       if (temporaryHighlight) {
         // Remove the temporary highlight
         removeTemporaryHighlight(temporaryHighlight.id);
 
-        // TODO: Add permanent highlight with tooltip
+        // TODO: Add permanent highlight with tooltip containing the AI response
         // This would integrate with the existing highlight system
         console.log("🔄 CONVERTING TO PERMANENT HIGHLIGHT:", {
           text: selectedText,
           question,
-          highlightId: temporaryHighlight.id
+          highlightId: temporaryHighlight.id,
+          aiResponse: explainCompletion.completion
         });
       }
     } catch (error) {
       console.error("Error submitting question:", error);
-    } finally {
-      setIsQuestionLoading(false);
-      setTextSelection(null);
-      setTemporaryHighlight(null);
     }
   };
 
@@ -1260,7 +1282,6 @@ export function PDFCanvas({
 
   // Add text selection listener
   useEffect(() => {
-    if (!onTextSelectionQuestion) return;
 
     // Only use mouseup to detect when user finishes selecting
     const handleMouseUp = (event: MouseEvent) => {
@@ -1311,7 +1332,7 @@ export function PDFCanvas({
     return () => {
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [onTextSelectionQuestion]);
+  }, []);
 
   return (
     <>
@@ -1429,13 +1450,15 @@ export function PDFCanvas({
       </div>
 
       {/* Text Selection Popup */}
-      {textSelection && onTextSelectionQuestion && (
+      {textSelection && (
         <TextSelectionPopup
           selectedText={textSelection.text}
           position={textSelection.position}
           onClose={closeTextSelection}
           onSubmitQuestion={handleQuestionSubmit}
-          isLoading={isQuestionLoading}
+          isLoading={explainCompletion.isLoading}
+          aiResponse={explainCompletion.completion}
+          aiError={explainCompletion.error?.message}
         />
       )}
     </>
