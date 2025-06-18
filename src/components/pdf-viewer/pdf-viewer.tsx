@@ -6,11 +6,10 @@ import { usePDFHighlights } from "@/hooks/use-pdf-highlights";
 import { usePDFSearch } from "@/hooks/use-pdf-search";
 import { usePDFViewer } from "@/hooks/use-pdf-viewer";
 import type { PDFViewerProps } from "@/types/pdf-viewer";
-import { useCallback, useEffect, useRef } from "react";
-import { PageNavigation } from "./page-navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PDFCanvas } from "./pdf-canvas";
+import { PDFMinimap } from "./pdf-minimap";
 import { SearchPanel } from "./search-panel";
-import { Toolbar } from "./toolbar";
 
 // PDF.js types
 declare global {
@@ -32,9 +31,31 @@ export default function PDFViewer({
   pdfUrl = "https://arxiv.org/pdf/1706.03762",
   instanceId = "default",
   highlights = [],
+  // External toolbar functions
+  onPreviousPage: externalOnPreviousPage,
+  onNextPage: externalOnNextPage,
+  onZoomIn: externalOnZoomIn,
+  onZoomOut: externalOnZoomOut,
+  onToggleFullscreen: externalOnToggleFullscreen,
+  onToggleSearch: externalOnToggleSearch,
+  // Callback to expose PDF viewer functions
+  onPDFViewerReady,
+  // Minimap control
+  showMinimap = true,
+  onMinimapNavigation,
 }: PDFViewerProps) {
   console.log({ highlights, pdfUrl, instanceId });
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // State for minimap
+  const [scrollState, setScrollState] = useState({
+    scrollTop: 0,
+    clientHeight: 0,
+    scrollHeight: 0,
+  });
+
+  // State for minimap page highlight data
+  const [pageHighlightData, setPageHighlightData] = useState<Map<number, { annotations: Array<{ type: string; position: number }>; searchResults: Array<{ position: number }> }>>(new Map());
 
   // Custom hooks
   const pdfViewer = usePDFViewer(pdfUrl);
@@ -63,6 +84,11 @@ export default function PDFViewer({
     [pdfSearch, pdfViewer],
   );
 
+  // Handle page highlight data from PDF canvas
+  const handlePageHighlightData = useCallback((data: Map<number, { annotations: Array<{ type: string; position: number }>; searchResults: Array<{ position: number }> }>) => {
+    setPageHighlightData(data);
+  }, []);
+
   // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -79,7 +105,8 @@ export default function PDFViewer({
       if (e.ctrlKey || e.metaKey) {
         if (e.key === "f") {
           e.preventDefault();
-          pdfSearch.setShowSearch(true);
+          const toggleSearch = externalOnToggleSearch || (() => pdfSearch.setShowSearch(true));
+          toggleSearch();
         }
       }
       if (pdfSearch.showSearch && pdfSearch.searchResults.length > 0) {
@@ -101,7 +128,7 @@ export default function PDFViewer({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [pdfSearch, handleNavigateToResult]);
+  }, [pdfSearch, handleNavigateToResult, externalOnToggleSearch]);
 
   // Handle search
   const handleSearch = async () => {
@@ -130,14 +157,54 @@ export default function PDFViewer({
     handleNavigateToResult(nextIndex);
   };
 
-  // Handle fullscreen toggle
-  const handleToggleFullscreen = () => {
+  // Handle fullscreen toggle - use external handler if provided
+  const handleToggleFullscreen = externalOnToggleFullscreen || (() => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen();
     } else {
       document.exitFullscreen();
     }
-  };
+  });
+
+  const handleToggleSearch = externalOnToggleSearch || (() => pdfSearch.setShowSearch(!pdfSearch.showSearch));
+
+  // Memoized navigation functions to prevent infinite loops
+  const handlePreviousPage = useCallback(() => {
+    pdfViewer.goToPage(pdfViewer.currentPage - 1);
+  }, [pdfViewer.goToPage, pdfViewer.currentPage]);
+
+  const handleNextPage = useCallback(() => {
+    pdfViewer.goToPage(pdfViewer.currentPage + 1);
+  }, [pdfViewer.goToPage, pdfViewer.currentPage]);
+
+  // Expose PDF viewer functions to parent
+  useEffect(() => {
+    if (onPDFViewerReady && pdfViewer.pdf) {
+      onPDFViewerReady({
+        currentPage: pdfViewer.currentPage,
+        totalPages: pdfViewer.totalPages,
+        scale: pdfViewer.scale,
+        onPreviousPage: handlePreviousPage,
+        onNextPage: handleNextPage,
+        onZoomIn: pdfViewer.zoomIn,
+        onZoomOut: pdfViewer.zoomOut,
+        onToggleFullscreen: handleToggleFullscreen,
+        onToggleSearch: handleToggleSearch,
+      });
+    }
+  }, [
+    onPDFViewerReady,
+    pdfViewer.pdf,
+    pdfViewer.currentPage,
+    pdfViewer.totalPages,
+    pdfViewer.scale,
+    handlePreviousPage,
+    handleNextPage,
+    pdfViewer.zoomIn,
+    pdfViewer.zoomOut,
+    handleToggleFullscreen,
+    handleToggleSearch,
+  ]);
 
   // Add navigate function to window for tooltip buttons
   useEffect(() => {
@@ -149,6 +216,65 @@ export default function PDFViewer({
       delete windowWithNav[`navigateToResult_${instanceId}`];
     };
   }, [instanceId, handleNavigateToResult]);
+
+  // Update scroll state for minimap and current page detection
+  useEffect(() => {
+    const updateScrollState = () => {
+      if (containerRef.current) {
+        // Find the PDF canvas container that has the scroll
+        const pdfCanvasContainer = containerRef.current.querySelector('[class*="overflow-auto"]') as HTMLElement;
+        if (pdfCanvasContainer) {
+          const newScrollState = {
+            scrollTop: pdfCanvasContainer.scrollTop,
+            clientHeight: pdfCanvasContainer.clientHeight,
+            scrollHeight: pdfCanvasContainer.scrollHeight,
+          };
+          setScrollState(newScrollState);
+
+          // Calculate current page based on scroll position
+          if (pdfViewer.totalPages > 0 && newScrollState.scrollHeight > newScrollState.clientHeight) {
+            // Only calculate if there's actual scrollable content
+            // Estimate page height (total height / number of pages)
+            const estimatedPageHeight = newScrollState.scrollHeight / pdfViewer.totalPages;
+            // Calculate which page is currently at the top of the viewport (more intuitive)
+            const calculatedPage = Math.max(1, Math.min(pdfViewer.totalPages, Math.floor(newScrollState.scrollTop / estimatedPageHeight) + 1));
+
+            console.log(`📄 SCROLL DETECTION: scrollTop=${newScrollState.scrollTop}, pageHeight=${estimatedPageHeight.toFixed(1)}, calculatedPage=${calculatedPage}`);
+
+            // Only update if the page actually changed to avoid unnecessary re-renders
+            if (calculatedPage !== pdfViewer.currentPage) {
+              console.log(`📄 PAGE CHANGED: From ${pdfViewer.currentPage} to ${calculatedPage} (scroll: ${newScrollState.scrollTop})`);
+              pdfViewer.updateCurrentPage(calculatedPage);
+            }
+          } else if (newScrollState.scrollHeight <= newScrollState.clientHeight && pdfViewer.currentPage !== 1) {
+            // If there's no scroll, we should be on page 1
+            console.log(`📄 NO SCROLL: Resetting to page 1`);
+            pdfViewer.updateCurrentPage(1);
+          }
+        }
+      }
+    };
+
+    // Set up scroll listener
+    const setupScrollListener = () => {
+      const pdfCanvasContainer = containerRef.current?.querySelector('[class*="overflow-auto"]') as HTMLElement;
+      if (pdfCanvasContainer) {
+        pdfCanvasContainer.addEventListener('scroll', updateScrollState, { passive: true });
+        // Initial update
+        updateScrollState();
+
+        return () => {
+          pdfCanvasContainer.removeEventListener('scroll', updateScrollState);
+        };
+      }
+    };
+
+    // Wait for PDF to load and elements to be ready
+    if (pdfViewer.pdf && containerRef.current) {
+      const cleanup = setupScrollListener();
+      return cleanup;
+    }
+  }, [pdfViewer.pdf, pdfViewer.totalPages, pdfViewer.currentPage, pdfViewer.updateCurrentPage]);
 
   if (pdfViewer.loading) {
     return (
@@ -175,60 +301,75 @@ export default function PDFViewer({
   return (
     <div
       ref={containerRef}
-      className={`flex flex-col ${pdfViewer.isFullscreen ? "h-screen" : "h-full"} bg-muted ${className}`}
+      className={`flex ${pdfViewer.isFullscreen ? "h-screen" : "h-full"} bg-muted ${className}`}
     >
-      {/* Search Panel */}
-      <SearchPanel
-        showSearch={pdfSearch.showSearch}
-        searchTerm={pdfSearch.searchTerm}
-        searchMode={pdfSearch.searchMode}
-        isSearching={pdfSearch.isSearching}
-        searchResults={pdfSearch.searchResults}
-        currentResultIndex={pdfSearch.currentResultIndex}
-        onSearchTermChange={pdfSearch.setSearchTerm}
-        onSearchModeChange={pdfSearch.setSearchMode}
-        onSearch={handleSearch}
-        onClose={() => pdfSearch.setShowSearch(false)}
-        onNavigatePrevious={handleNavigatePrevious}
-        onNavigateNext={handleNavigateNext}
-      />
+      {/* Main PDF Content */}
+      <div className="flex flex-col flex-1 min-w-0">
+        {/* Search Panel */}
+        <SearchPanel
+          showSearch={pdfSearch.showSearch}
+          searchTerm={pdfSearch.searchTerm}
+          searchMode={pdfSearch.searchMode}
+          isSearching={pdfSearch.isSearching}
+          searchResults={pdfSearch.searchResults}
+          currentResultIndex={pdfSearch.currentResultIndex}
+          onSearchTermChange={pdfSearch.setSearchTerm}
+          onSearchModeChange={pdfSearch.setSearchMode}
+          onSearch={handleSearch}
+          onClose={() => pdfSearch.setShowSearch(false)}
+          onNavigatePrevious={handleNavigatePrevious}
+          onNavigateNext={handleNavigateNext}
+        />
 
-      {/* Toolbar */}
-      <Toolbar
-        currentPage={pdfViewer.currentPage}
-        totalPages={pdfViewer.totalPages}
-        scale={pdfViewer.scale}
-        onPreviousPage={() => pdfViewer.goToPage(pdfViewer.currentPage - 1)}
-        onNextPage={() => pdfViewer.goToPage(pdfViewer.currentPage + 1)}
-        onZoomIn={pdfViewer.zoomIn}
-        onZoomOut={pdfViewer.zoomOut}
-        onToggleFullscreen={handleToggleFullscreen}
-        onToggleSearch={() => pdfSearch.setShowSearch(!pdfSearch.showSearch)}
-      />
+        {/* PDF Canvas */}
+        <PDFCanvas
+          pdf={pdfViewer.pdf}
+          currentPage={pdfViewer.currentPage}
+          shouldAutoScroll={pdfViewer.shouldAutoScroll}
+          onAutoScrollComplete={() => pdfViewer.setShouldAutoScroll(false)}
+          scale={pdfViewer.scale}
+          isFullscreen={pdfViewer.isFullscreen}
+          instanceId={instanceId}
+          searchTerm={pdfSearch.searchTerm}
+          searchMode={pdfSearch.searchMode}
+          searchResults={pdfSearch.searchResults}
+          currentResultIndex={pdfSearch.currentResultIndex}
+          isSearching={pdfSearch.isSearching}
+          highlightService={pdfHighlights}
+          highlights={highlights}
+          onNavigateToResult={handleNavigateToResult}
+          onPageHighlightData={handlePageHighlightData}
+        />
+      </div>
 
-      {/* PDF Canvas */}
-      <PDFCanvas
-        pdf={pdfViewer.pdf}
-        currentPage={pdfViewer.currentPage}
-        scale={pdfViewer.scale}
-        isFullscreen={pdfViewer.isFullscreen}
-        instanceId={instanceId}
-        searchTerm={pdfSearch.searchTerm}
-        searchMode={pdfSearch.searchMode}
-        searchResults={pdfSearch.searchResults}
-        currentResultIndex={pdfSearch.currentResultIndex}
-        isSearching={pdfSearch.isSearching}
-        highlightService={pdfHighlights}
-        highlights={highlights}
-        onNavigateToResult={handleNavigateToResult}
-      />
-
-      {/* Page Navigation */}
-      <PageNavigation
-        currentPage={pdfViewer.currentPage}
-        totalPages={pdfViewer.totalPages}
-        onPageChange={pdfViewer.goToPage}
-      />
+      {/* Minimap */}
+      {showMinimap && pdfViewer.pdf && (
+        <PDFMinimap
+          totalPages={pdfViewer.totalPages}
+          currentPage={pdfViewer.currentPage}
+          pageHeight={pdfViewer.pdf ? 1100 : 800} // Better estimate based on standard PDF page height
+          viewerScrollTop={scrollState.scrollTop}
+          viewerClientHeight={scrollState.clientHeight}
+          viewerScrollHeight={scrollState.scrollHeight}
+          pageHighlightData={pageHighlightData}
+          onNavigation={(scrollPercentage) => {
+            if (onMinimapNavigation) {
+              onMinimapNavigation(scrollPercentage);
+            } else if (containerRef.current) {
+              // Find the scrollable PDF canvas container
+              const pdfCanvasContainer = containerRef.current.querySelector('[class*="overflow-auto"]') as HTMLElement;
+              if (pdfCanvasContainer && scrollState.scrollHeight > 0) {
+                const targetScrollTop = scrollPercentage * (scrollState.scrollHeight - scrollState.clientHeight);
+                pdfCanvasContainer.scrollTo({
+                  top: targetScrollTop,
+                  behavior: 'smooth'
+                });
+              }
+            }
+          }}
+          className="w-32 flex-shrink-0"
+        />
+      )}
     </div>
   );
 }

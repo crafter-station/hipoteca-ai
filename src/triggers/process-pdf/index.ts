@@ -51,7 +51,10 @@ export const processPDFTask = schemaTask({
         createdAt: new Date(),
       };
 
-      logger.info("saving contract", { id: document.id });
+      logger.info("saving contract", {
+        id: document.id,
+        userId: document.userId,
+      });
       await saveContract(document);
       logger.info("contract saved successfully in redis");
 

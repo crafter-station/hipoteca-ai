@@ -139,3 +139,28 @@ export async function getContractByKey(key: string): Promise<Contract | null> {
     throw error;
   }
 }
+
+export async function getUserContracts(userId: string): Promise<Contract[]> {
+  try {
+    const userSetKey = getUserContractsKey(userId);
+    const contractIds = await redis.smembers(userSetKey);
+
+    if (!contractIds || contractIds.length === 0) {
+      return [];
+    }
+
+    // Fetch all contracts for this user
+    const contracts: Contract[] = [];
+    for (const contractId of contractIds) {
+      const contract = await getContractById(contractId);
+      if (contract) {
+        contracts.push(contract);
+      }
+    }
+
+    return contracts;
+  } catch (error) {
+    console.error("Error getting user contracts:", error);
+    throw error;
+  }
+}

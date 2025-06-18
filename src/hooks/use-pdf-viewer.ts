@@ -1,6 +1,6 @@
 import { loadPDFJS } from "@/lib/pdf-utils";
 import type { PDFViewerState } from "@/types/pdf-viewer";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export const usePDFViewer = (pdfUrl: string) => {
   const [state, setState] = useState<PDFViewerState>({
@@ -13,7 +13,9 @@ export const usePDFViewer = (pdfUrl: string) => {
     isFullscreen: false,
   });
 
-  const loadPDF = async () => {
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(false);
+
+  const loadPDF = useCallback(async () => {
     try {
       setState((prev) => ({ ...prev, loading: true, error: null }));
       const loadingTask = window.pdfjsLib.getDocument(pdfUrl);
@@ -33,7 +35,7 @@ export const usePDFViewer = (pdfUrl: string) => {
       }));
       console.error("Error loading PDF:", err);
     }
-  };
+  }, [pdfUrl]);
 
   useEffect(() => {
     const initializePDF = async () => {
@@ -50,33 +52,50 @@ export const usePDFViewer = (pdfUrl: string) => {
     };
 
     initializePDF();
-  }, [pdfUrl]);
+  }, [loadPDF]);
 
-  const goToPage = (pageNum: number) => {
-    if (pageNum >= 1 && pageNum <= state.totalPages) {
-      setState((prev) => ({ ...prev, currentPage: pageNum }));
-    }
-  };
+  const goToPage = useCallback((pageNum: number) => {
+    setState((prev) => {
+      if (pageNum >= 1 && pageNum <= prev.totalPages) {
+        setShouldAutoScroll(true); // Enable auto-scroll for manual navigation
+        return { ...prev, currentPage: pageNum };
+      }
+      return prev;
+    });
+  }, []);
 
-  const zoomIn = () => {
+  const updateCurrentPage = useCallback((pageNum: number) => {
+    setState((prev) => {
+      if (pageNum >= 1 && pageNum <= prev.totalPages) {
+        setShouldAutoScroll(false); // Disable auto-scroll for scroll detection
+        return { ...prev, currentPage: pageNum };
+      }
+      return prev;
+    });
+  }, []);
+
+  const zoomIn = useCallback(() => {
     setState((prev) => ({ ...prev, scale: Math.min(prev.scale + 0.25, 3) }));
-  };
+  }, []);
 
-  const zoomOut = () => {
+  const zoomOut = useCallback(() => {
     setState((prev) => ({ ...prev, scale: Math.max(prev.scale - 0.25, 0.5) }));
-  };
+  }, []);
 
-  const setScale = (scale: number) => {
+  const setScale = useCallback((scale: number) => {
     setState((prev) => ({ ...prev, scale }));
-  };
+  }, []);
 
-  const setIsFullscreen = (isFullscreen: boolean) => {
+  const setIsFullscreen = useCallback((isFullscreen: boolean) => {
     setState((prev) => ({ ...prev, isFullscreen }));
-  };
+  }, []);
 
   return {
     ...state,
+    shouldAutoScroll,
+    setShouldAutoScroll,
     goToPage,
+    updateCurrentPage,
     zoomIn,
     zoomOut,
     setScale,

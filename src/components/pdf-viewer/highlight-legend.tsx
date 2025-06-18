@@ -154,7 +154,7 @@ export function HighlightLegend({ className = "" }: HighlightLegendProps) {
             className="flex items-center gap-2"
           >
             <Info size={16} />
-            Leyenda de Destacados
+            Leyenda
           </Button>
         </PopoverTrigger>
         <PopoverContent className="max-h-96 w-96 overflow-y-auto">

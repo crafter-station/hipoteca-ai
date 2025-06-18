@@ -25,7 +25,7 @@ export function Header() {
           href="#hero"
           className="mr-1 inline-flex shrink-0 cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border-none bg-transparent px-4 font-medium text-sm outline-none transition-all hover:bg-transparent focus:bg-transparent focus-visible:bg-transparent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 has-[>svg]:p-0 [&>svg]:size-12"
         >
-          <Logo className="size-16" />
+          <Logo className="size-14" />
           <span className="font-bold text-foreground text-sm">HipotecaAI</span>
         </SmoothScrollLink>
       </div>

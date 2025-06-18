@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { uploadFiles } from "@/lib/uploadthing";
 import { cn } from "@/lib/utils";
+import { useUser } from "@clerk/nextjs";
 import { ArrowUpFromLine, Plus, Sparkles, X, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -23,6 +24,7 @@ export function UploadEmptyState({
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const { user, isLoaded } = useUser();
 
   const handleFileSelect = (file: File) => {
     if (!file || file.type !== "application/pdf") {
@@ -34,6 +36,14 @@ export function UploadEmptyState({
   const handleAnalyze = async () => {
     if (!selectedFile) return;
 
+    // Verify user is authenticated
+    if (!user) {
+      console.error("User not authenticated");
+      alert("Debes iniciar sesión para analizar documentos");
+      return;
+    }
+
+    console.log("Starting PDF analysis for user:", user.id);
     setIsAnalyzing(true);
     try {
       const [{ ufsUrl, name, key }] = await uploadFiles("documentUploader", {
@@ -43,17 +53,21 @@ export function UploadEmptyState({
         },
       });
 
+      console.log("File uploaded successfully:", { ufsUrl, name, key });
       const resp = await processPDF(ufsUrl, name);
 
       if (!resp.error && resp.runId && resp.token) {
+        console.log("PDF processing started successfully:", resp);
         // Redirect to analysis page with key, runId and token for subscription
         router.push(`/checkr/${key}?runId=${resp.runId}&token=${resp.token}`);
       } else {
         console.error("Error processing PDF:", resp.error);
+        alert("Error al procesar el PDF. Por favor, inténtalo de nuevo.");
         setIsAnalyzing(false);
       }
     } catch (error) {
       console.error("Upload failed:", error);
+      alert("Error al subir el archivo. Por favor, inténtalo de nuevo.");
       setIsAnalyzing(false);
     }
   };
@@ -302,6 +316,14 @@ export function UploadEmptyState({
             <div className="h-1 w-1 rounded-full bg-current" />
             <span>Procesamiento con IA</span>
           </div>
+          {user && (
+            <p className="mt-2 text-muted-foreground/60 text-xs">
+              Conectado como:{" "}
+              {user.firstName ||
+                user.username ||
+                user.emailAddresses[0]?.emailAddress}
+            </p>
+          )}
         </div>
       </div>
     </div>

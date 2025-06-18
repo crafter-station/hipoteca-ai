@@ -84,6 +84,8 @@ interface HighlightServiceType {
 interface PDFCanvasProps {
   pdf: PDFDocument | null;
   currentPage: number;
+  shouldAutoScroll?: boolean;
+  onAutoScrollComplete?: () => void;
   scale: number;
   isFullscreen: boolean;
   instanceId: string;
@@ -95,15 +97,19 @@ interface PDFCanvasProps {
   highlightService: HighlightServiceType;
   highlights: HighlightAnnotation[];
   onNavigateToResult: (index: number) => void;
+  // Callback to report page highlight data for minimap
+  onPageHighlightData?: (data: Map<number, { annotations: Array<{ type: string; position: number }>; searchResults: Array<{ position: number }> }>) => void;
 }
 
 const DEBUG = false;
-const ANNOTATION_DEBUG = false; // Clean up logs
+const ANNOTATION_DEBUG = false; // Disable verbose logging for now
 const TOOLTIP_DEBUG = false; // Focus on tooltip generation
 
 export function PDFCanvas({
   pdf,
   currentPage,
+  shouldAutoScroll = true,
+  onAutoScrollComplete,
   scale,
   isFullscreen,
   instanceId,
@@ -115,6 +121,7 @@ export function PDFCanvas({
   highlightService,
   highlights,
   onNavigateToResult,
+  onPageHighlightData,
 }: PDFCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<
@@ -129,11 +136,37 @@ export function PDFCanvas({
   >(new Map());
   const [totalPages, setTotalPages] = useState(0);
 
+  // Track page highlight data for minimap
+  const pageHighlightDataRef = useRef<Map<number, { annotations: Array<{ type: string; position: number }>; searchResults: Array<{ position: number }> }>>(new Map());
+  const [highlightDataVersion, setHighlightDataVersion] = useState(0);
+
+  // Track render tasks to cancel them if needed
+  const renderTasksRef = useRef<Map<number, { promise: Promise<void>; cancel: () => void }>>(new Map());
+
+  // Track which pages are currently being rendered to avoid duplicate renders
+  const renderingPagesRef = useRef<Set<number>>(new Set());
+
   // Initialize pages when PDF loads
   useEffect(() => {
     if (pdf) {
       setTotalPages(pdf.numPages);
     }
+  }, [pdf]);
+
+  // Cleanup render tasks when component unmounts or PDF changes
+  useEffect(() => {
+    return () => {
+      // Cancel all pending render tasks
+      renderTasksRef.current.forEach((task) => {
+        try {
+          task.cancel();
+        } catch (err) {
+          // Ignore cancellation errors
+        }
+      });
+      renderTasksRef.current.clear();
+      renderingPagesRef.current.clear();
+    };
   }, [pdf]);
 
   // Render all pages
@@ -153,7 +186,27 @@ export function PDFCanvas({
   const renderPage = async (pageNum: number) => {
     if (!pdf || !containerRef.current) return;
 
+    // Skip if this page is already being rendered
+    if (renderingPagesRef.current.has(pageNum)) {
+      if (DEBUG) console.log(`Page ${pageNum} already being rendered, skipping`);
+      return;
+    }
+
+    // Mark this page as being rendered
+    renderingPagesRef.current.add(pageNum);
+
     try {
+      // Cancel any existing render task for this page only if it's still pending
+      const existingTask = renderTasksRef.current.get(pageNum);
+      if (existingTask) {
+        try {
+          existingTask.cancel();
+        } catch (err) {
+          // Ignore if already completed or cancelled
+        }
+        renderTasksRef.current.delete(pageNum);
+      }
+
       const page = await pdf.getPage(pageNum);
       const pageRefs_current = pageRefs.current.get(pageNum);
 
@@ -166,6 +219,11 @@ export function PDFCanvas({
       const { canvas, textLayer, container } = pageRefs_current;
 
       // Calculate responsive scale based on container width
+      if (!containerRef.current) {
+        console.warn(`Container ref is null for page ${pageNum}`);
+        return;
+      }
+
       const containerWidth = containerRef.current.clientWidth - 32; // Account for padding
       const pageViewport = page.getViewport({ scale: 1 });
       const responsiveScale = calculateResponsiveScale(
@@ -179,6 +237,10 @@ export function PDFCanvas({
       // @ts-ignore - canvas is guaranteed to exist at this point
       const context = canvas.getContext("2d");
       if (!context) return;
+
+      // Clear the canvas before rendering
+      // @ts-ignore - canvas is guaranteed to exist at this point
+      context.clearRect(0, 0, canvas.width, canvas.height);
 
       // @ts-ignore - canvas is guaranteed to exist at this point
       canvas.height = viewport.height;
@@ -196,7 +258,16 @@ export function PDFCanvas({
         canvasContext: context,
         viewport: viewport,
       };
-      await page.render(renderContext).promise;
+
+      // Start the render task and store it for potential cancellation
+      const renderTask = page.render(renderContext) as { promise: Promise<void>; cancel: () => void };
+      renderTasksRef.current.set(pageNum, renderTask);
+
+      await renderTask.promise;
+
+      // Remove the completed task from tracking
+      renderTasksRef.current.delete(pageNum);
+      renderingPagesRef.current.delete(pageNum);
 
       const textContent = await page.getTextContent();
 
@@ -261,7 +332,14 @@ export function PDFCanvas({
         }, 300); // Increased timeout to ensure text layer is fully ready
       }
     } catch (err) {
-      console.error(`Error rendering page ${pageNum}:`, err);
+      // Remove the failed task from tracking
+      renderTasksRef.current.delete(pageNum);
+      renderingPagesRef.current.delete(pageNum);
+
+      // Don't log cancellation errors as they're expected
+      if (err instanceof Error && !err.message.includes('Rendering cancelled')) {
+        console.error(`Error rendering page ${pageNum}:`, err);
+      }
     }
   };
 
@@ -278,6 +356,11 @@ export function PDFCanvas({
           `highlightSearchResults: textLayerRef or parent not found for page ${pageNum}`,
         );
       return;
+    }
+
+    // Initialize page highlight data if not exists
+    if (!pageHighlightDataRef.current.has(pageNum)) {
+      pageHighlightDataRef.current.set(pageNum, { annotations: [], searchResults: [] });
     }
 
     const { textLayer, container } = pageRefs_current;
@@ -355,6 +438,11 @@ export function PDFCanvas({
         allMatches,
       );
 
+    // Update search results for this page
+    const currentData = pageHighlightDataRef.current.get(pageNum)!;
+    // Clear previous search results for this page
+    currentData.searchResults = [];
+
     if (allMatches.length === 0) {
       if (DEBUG)
         console.log(
@@ -365,6 +453,13 @@ export function PDFCanvas({
 
     // Map matches back to spans and create highlights
     allMatches.forEach((match, matchIndex) => {
+      // Track search result position for minimap
+      const currentData = pageHighlightDataRef.current.get(pageNum)!;
+      const position = match.start / completeText.length;
+      currentData.searchResults.push({ position });
+      // Trigger data update
+      setHighlightDataVersion(prev => prev + 1);
+
       const spanMatches = mapMatchToSpans(match, indexMap);
       if (DEBUG)
         console.log(
@@ -588,6 +683,9 @@ export function PDFCanvas({
       return;
     }
 
+    // Initialize/reset page highlight data for this page to avoid stale data
+    pageHighlightDataRef.current.set(pageNum, { annotations: [], searchResults: [] });
+
     const { textLayer, container } = pageRefs_current;
 
     // Remove existing annotation highlights for this page
@@ -636,6 +734,11 @@ export function PDFCanvas({
     highlights.forEach((annotation, annotationIndex) => {
       const normalizedSentence = normalizeSearchTerm(annotation.sentence);
 
+      // Debug annotation types (reduced)
+      if (annotationIndex === 0) {
+        console.log(`🔍 PROCESSING: ${highlights.length} annotations for page ${pageNum}`);
+      }
+
       if (ANNOTATION_DEBUG) {
         console.log(
           `🔍 ANNOTATION: Looking for "${normalizedSentence}" on page ${pageNum}`,
@@ -648,6 +751,8 @@ export function PDFCanvas({
         normalizedSentence,
         "contains",
       );
+
+
 
       if (allMatches.length === 0) {
         if (ANNOTATION_DEBUG) {
@@ -666,6 +771,19 @@ export function PDFCanvas({
 
       // Process each match (usually just one for annotations)
       allMatches.forEach((match, matchIndex) => {
+        // Track this annotation for minimap - always add each match
+        const currentData = pageHighlightDataRef.current.get(pageNum)!;
+
+        // Calculate position based on where the match was found in the page
+        const position = match.start / completeText.length;
+        currentData.annotations.push({ type: annotation.type, position });
+
+        if (ANNOTATION_DEBUG) {
+          console.log(`📍 MINIMAP DATA: Added ${annotation.type} at position ${position.toFixed(4)} on page ${pageNum}`);
+        }
+
+        // Trigger data update
+        setHighlightDataVersion(prev => prev + 1);
         const spanMatches = mapMatchToSpans(match, indexMap);
 
         if (spanMatches.length === 0) return;
@@ -736,6 +854,16 @@ export function PDFCanvas({
       });
     });
 
+    // Debug: Show what data we're sending to minimap for this page
+    if (ANNOTATION_DEBUG) {
+      const finalData = pageHighlightDataRef.current.get(pageNum);
+      console.log(`🎯 FINAL MINIMAP DATA for page ${pageNum}:`, {
+        annotations: finalData?.annotations.length || 0,
+        annotationDetails: finalData?.annotations.map(a => ({ type: a.type, position: a.position.toFixed(4) })) || [],
+        searchResults: finalData?.searchResults.length || 0
+      });
+    }
+
     // Note: createUnifiedHoverAreas() is now called from renderPage after both search and annotations are processed
   };
 
@@ -752,6 +880,13 @@ export function PDFCanvas({
     };
     return classMap[type] || "highlight-term";
   };
+
+  // Report page highlight data to parent when it changes
+  useEffect(() => {
+    if (onPageHighlightData) {
+      onPageHighlightData(new Map(pageHighlightDataRef.current));
+    }
+  }, [highlightDataVersion, onPageHighlightData]);
 
   // Effects
   useEffect(() => {
@@ -831,17 +966,21 @@ export function PDFCanvas({
     }
   }, [highlightService?.tooltipContent?.size, totalPages]); // Only trigger when size changes
 
-  // Scroll to current page when it changes
+  // Scroll to current page when it changes (only if shouldAutoScroll is true)
   useEffect(() => {
-    if (currentPage && totalPages > 0) {
+    if (currentPage && totalPages > 0 && shouldAutoScroll) {
       setTimeout(() => {
         scrollToCurrentPage();
+        // Reset the auto-scroll flag after completing the scroll
+        if (onAutoScrollComplete) {
+          onAutoScrollComplete();
+        }
       }, 200);
     }
-  }, [currentPage]);
+  }, [currentPage, shouldAutoScroll, onAutoScrollComplete]);
 
   return (
-    <div ref={containerRef} className="flex-1 overflow-auto bg-muted p-4">
+    <div ref={containerRef} className="flex-1 overflow-auto bg-muted px-4 py-8">
       <div className="flex flex-col items-center space-y-8">
         {Array.from({ length: totalPages }, (_, index) => {
           const pageNum = index + 1;
