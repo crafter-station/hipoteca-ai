@@ -1,12 +1,33 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { FileText, Loader2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Loader2,
+  Maximize,
+  Search,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+import { HighlightLegend } from "./highlight-legend";
 
 interface PDFHeaderProps {
   pdfName?: string;
   status: string;
   isLoading?: boolean;
+  // Toolbar props
+  currentPage?: number;
+  totalPages?: number;
+  scale?: number;
+  onPreviousPage?: () => void;
+  onNextPage?: () => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  onToggleFullscreen?: () => void;
+  onToggleSearch?: () => void;
 }
 
 // Status mapping for display
@@ -72,10 +93,23 @@ export function PDFHeader({
   pdfName,
   status,
   isLoading = false,
+  // Toolbar props
+  currentPage,
+  totalPages,
+  scale,
+  onPreviousPage,
+  onNextPage,
+  onZoomIn,
+  onZoomOut,
+  onToggleFullscreen,
+  onToggleSearch,
 }: PDFHeaderProps) {
   const statusConfig =
     STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || DEFAULT_STATUS;
   const showSpinner = status === "REATTEMPTING" || isLoading;
+
+  // Show toolbar controls only when PDF is loaded
+  const showToolbarControls = currentPage && totalPages && scale !== undefined;
 
   return (
     <header className="sticky top-0 z-50 m-2 rounded-lg border border-border bg-sidebar shadow-sm">
@@ -104,6 +138,92 @@ export function PDFHeader({
             </span>
           </div>
         </div>
+
+        {/* Toolbar Controls - Only show when PDF is loaded */}
+        {showToolbarControls && (
+          <>
+            {/* Page Navigation */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onPreviousPage}
+                disabled={currentPage <= 1}
+                className="h-8 w-8 p-0"
+                title="Página anterior"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="min-w-[60px] text-center text-muted-foreground text-xs">
+                {currentPage}/{totalPages}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onNextPage}
+                disabled={currentPage >= totalPages}
+                className="h-8 w-8 p-0"
+                title="Página siguiente"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Divider */}
+            <div className="h-6 w-px bg-border" />
+
+            {/* Zoom Controls */}
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onZoomOut}
+                className="h-8 w-8 p-0"
+                title="Alejar"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="min-w-[45px] text-center text-muted-foreground text-xs">
+                {Math.round(scale * 100)}%
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onZoomIn}
+                className="h-8 w-8 p-0"
+                title="Acercar"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Divider */}
+            <div className="h-6 w-px bg-border" />
+
+            {/* Action Controls */}
+            <div className="flex items-center gap-1">
+              <HighlightLegend />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggleSearch}
+                className="h-8 w-8 p-0"
+                title="Buscar"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggleFullscreen}
+                className="h-8 w-8 p-0"
+                title="Pantalla completa"
+              >
+                <Maximize className="h-4 w-4" />
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </header>
   );

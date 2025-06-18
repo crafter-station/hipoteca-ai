@@ -208,6 +208,11 @@ export function PDFCanvas({
       const { canvas, textLayer, container } = pageRefs_current;
 
       // Calculate responsive scale based on container width
+      if (!containerRef.current) {
+        console.warn(`Container ref is null for page ${pageNum}`);
+        return;
+      }
+
       const containerWidth = containerRef.current.clientWidth - 32; // Account for padding
       const pageViewport = page.getViewport({ scale: 1 });
       const responsiveScale = calculateResponsiveScale(

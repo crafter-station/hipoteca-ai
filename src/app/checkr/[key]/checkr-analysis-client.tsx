@@ -15,7 +15,7 @@ import type { HighlightAnnotation, HighlightType } from "@/types/pdf-viewer";
 import { useRealtimeRun } from "@trigger.dev/react-hooks";
 import { AlertCircle, CheckCircle, Loader2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface PDFData {
@@ -204,6 +204,32 @@ function CheckrAnalysisStatic({
   const [pdfData, setPdfData] = useState<PDFData | null>(null);
   const [contract, setContract] = useState<Contract | null>(null);
 
+  // Memoize highlights to prevent infinite re-renders - MUST be at top level
+  const memoizedHighlights = useMemo(() => {
+    return contract ? convertContractHighlights(contract.highlights) : [];
+  }, [contract]);
+
+  // PDF viewer state for toolbar functionality
+  const [pdfViewerState, setPdfViewerState] = useState<{
+    currentPage?: number;
+    totalPages?: number;
+    scale?: number;
+    onPreviousPage?: () => void;
+    onNextPage?: () => void;
+    onZoomIn?: () => void;
+    onZoomOut?: () => void;
+    onToggleFullscreen?: () => void;
+    onToggleSearch?: () => void;
+  }>({});
+
+  // Safe callback to update PDF viewer state - wrapped in useCallback to prevent infinite loops
+  const handlePDFViewerReady = useCallback(
+    (newState: typeof pdfViewerState) => {
+      setPdfViewerState(newState);
+    },
+    [],
+  );
+
   return (
     <CheckrAnalysisContent
       keyParam={keyParam}
@@ -249,6 +275,45 @@ function CheckrAnalysisContent({
 }) {
   const [isLoadingContract, setIsLoadingContract] = useState(!runId); // Start loading if no runId
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
+
+  // Memoize highlights to prevent infinite re-renders - MUST be at top level
+  const memoizedHighlights = useMemo(() => {
+    return contract ? convertContractHighlights(contract.highlights) : [];
+  }, [contract]);
+
+  // PDF viewer state for toolbar functionality
+  const [pdfViewerState, setPdfViewerState] = useState<{
+    currentPage?: number;
+    totalPages?: number;
+    scale?: number;
+    onPreviousPage?: () => void;
+    onNextPage?: () => void;
+    onZoomIn?: () => void;
+    onZoomOut?: () => void;
+    onToggleFullscreen?: () => void;
+    onToggleSearch?: () => void;
+  }>({});
+
+  // Safe callback to update PDF viewer state - wrapped in useCallback to prevent infinite loops
+  const handlePDFViewerReady = useCallback(
+    (newState: typeof pdfViewerState) => {
+      // Only update if state actually changed to prevent infinite loops
+      setPdfViewerState((prevState) => {
+        // Check if any values actually changed
+        const hasChanged =
+          prevState.currentPage !== newState.currentPage ||
+          prevState.totalPages !== newState.totalPages ||
+          prevState.scale !== newState.scale;
+
+        if (hasChanged || !prevState.onPreviousPage) {
+          return newState;
+        }
+
+        return prevState;
+      });
+    },
+    [],
+  );
 
   // Set PDF data based on key
   useEffect(() => {
@@ -547,6 +612,16 @@ function CheckrAnalysisContent({
             pdfName={pdfData?.name}
             status={status}
             isLoading={isLoadingContract}
+            // Toolbar props
+            currentPage={pdfViewerState.currentPage}
+            totalPages={pdfViewerState.totalPages}
+            scale={pdfViewerState.scale}
+            onPreviousPage={pdfViewerState.onPreviousPage}
+            onNextPage={pdfViewerState.onNextPage}
+            onZoomIn={pdfViewerState.onZoomIn}
+            onZoomOut={pdfViewerState.onZoomOut}
+            onToggleFullscreen={pdfViewerState.onToggleFullscreen}
+            onToggleSearch={pdfViewerState.onToggleSearch}
           />
 
           <main className="flex-1 overflow-hidden p-2">
@@ -558,11 +633,8 @@ function CheckrAnalysisContent({
                     pdfUrl={pdfData.url}
                     className="h-full w-full"
                     instanceId={`contract-${keyParam}`}
-                    highlights={
-                      contract
-                        ? convertContractHighlights(contract.highlights)
-                        : []
-                    }
+                    highlights={memoizedHighlights}
+                    onPDFViewerReady={handlePDFViewerReady}
                   />
                 </div>
               ) : status === "FAILED" ? (

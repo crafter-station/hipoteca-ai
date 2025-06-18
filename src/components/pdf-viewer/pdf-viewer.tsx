@@ -9,7 +9,6 @@ import type { PDFViewerProps } from "@/types/pdf-viewer";
 import { useCallback, useEffect, useRef } from "react";
 import { PDFCanvas } from "./pdf-canvas";
 import { SearchPanel } from "./search-panel";
-import { Toolbar } from "./toolbar";
 
 // PDF.js types
 declare global {
@@ -31,6 +30,15 @@ export default function PDFViewer({
   pdfUrl = "https://arxiv.org/pdf/1706.03762",
   instanceId = "default",
   highlights = [],
+  // External toolbar functions
+  onPreviousPage: externalOnPreviousPage,
+  onNextPage: externalOnNextPage,
+  onZoomIn: externalOnZoomIn,
+  onZoomOut: externalOnZoomOut,
+  onToggleFullscreen: externalOnToggleFullscreen,
+  onToggleSearch: externalOnToggleSearch,
+  // Callback to expose PDF viewer functions
+  onPDFViewerReady,
 }: PDFViewerProps) {
   console.log({ highlights, pdfUrl, instanceId });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -78,7 +86,8 @@ export default function PDFViewer({
       if (e.ctrlKey || e.metaKey) {
         if (e.key === "f") {
           e.preventDefault();
-          pdfSearch.setShowSearch(true);
+          const toggleSearch = externalOnToggleSearch || (() => pdfSearch.setShowSearch(true));
+          toggleSearch();
         }
       }
       if (pdfSearch.showSearch && pdfSearch.searchResults.length > 0) {
@@ -100,7 +109,7 @@ export default function PDFViewer({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [pdfSearch, handleNavigateToResult]);
+  }, [pdfSearch, handleNavigateToResult, externalOnToggleSearch]);
 
   // Handle search
   const handleSearch = async () => {
@@ -129,14 +138,54 @@ export default function PDFViewer({
     handleNavigateToResult(nextIndex);
   };
 
-  // Handle fullscreen toggle
-  const handleToggleFullscreen = () => {
+  // Handle fullscreen toggle - use external handler if provided
+  const handleToggleFullscreen = externalOnToggleFullscreen || (() => {
     if (!document.fullscreenElement) {
       containerRef.current?.requestFullscreen();
     } else {
       document.exitFullscreen();
     }
-  };
+  });
+
+  const handleToggleSearch = externalOnToggleSearch || (() => pdfSearch.setShowSearch(!pdfSearch.showSearch));
+
+  // Memoized navigation functions to prevent infinite loops
+  const handlePreviousPage = useCallback(() => {
+    pdfViewer.goToPage(pdfViewer.currentPage - 1);
+  }, [pdfViewer.goToPage, pdfViewer.currentPage]);
+
+  const handleNextPage = useCallback(() => {
+    pdfViewer.goToPage(pdfViewer.currentPage + 1);
+  }, [pdfViewer.goToPage, pdfViewer.currentPage]);
+
+  // Expose PDF viewer functions to parent
+  useEffect(() => {
+    if (onPDFViewerReady && pdfViewer.pdf) {
+      onPDFViewerReady({
+        currentPage: pdfViewer.currentPage,
+        totalPages: pdfViewer.totalPages,
+        scale: pdfViewer.scale,
+        onPreviousPage: handlePreviousPage,
+        onNextPage: handleNextPage,
+        onZoomIn: pdfViewer.zoomIn,
+        onZoomOut: pdfViewer.zoomOut,
+        onToggleFullscreen: handleToggleFullscreen,
+        onToggleSearch: handleToggleSearch,
+      });
+    }
+  }, [
+    onPDFViewerReady,
+    pdfViewer.pdf,
+    pdfViewer.currentPage,
+    pdfViewer.totalPages,
+    pdfViewer.scale,
+    handlePreviousPage,
+    handleNextPage,
+    pdfViewer.zoomIn,
+    pdfViewer.zoomOut,
+    handleToggleFullscreen,
+    handleToggleSearch,
+  ]);
 
   // Add navigate function to window for tooltip buttons
   useEffect(() => {
@@ -190,19 +239,6 @@ export default function PDFViewer({
         onClose={() => pdfSearch.setShowSearch(false)}
         onNavigatePrevious={handleNavigatePrevious}
         onNavigateNext={handleNavigateNext}
-      />
-
-      {/* Toolbar */}
-      <Toolbar
-        currentPage={pdfViewer.currentPage}
-        totalPages={pdfViewer.totalPages}
-        scale={pdfViewer.scale}
-        onPreviousPage={() => pdfViewer.goToPage(pdfViewer.currentPage - 1)}
-        onNextPage={() => pdfViewer.goToPage(pdfViewer.currentPage + 1)}
-        onZoomIn={pdfViewer.zoomIn}
-        onZoomOut={pdfViewer.zoomOut}
-        onToggleFullscreen={handleToggleFullscreen}
-        onToggleSearch={() => pdfSearch.setShowSearch(!pdfSearch.showSearch)}
       />
 
       {/* PDF Canvas */}

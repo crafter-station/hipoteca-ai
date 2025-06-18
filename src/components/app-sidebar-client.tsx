@@ -46,53 +46,27 @@ export function AppSidebarClient({
   contracts: initialContracts,
 }: AppSidebarClientProps) {
   const [open, setOpen] = useState(false);
-  const [contracts, setContracts] = useState<ContractItem[]>([]);
-  const [contractsLoaded, setContractsLoaded] = useState(false);
+  const [contractsLoaded] = useState(true);
   const { user, isLoaded } = useUser();
 
-  // Contract skeleton component
-  const ContractSkeleton = () => (
-    <SidebarMenuItem className="w-full">
-      <SidebarMenuButton className="w-full cursor-default">
-        <div className="flex w-full items-center gap-2">
-          <div className="h-4 w-4 animate-pulse rounded bg-muted" />
-          <div className="flex-1 space-y-1">
-            <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
-            <div className="h-2 w-1/2 animate-pulse rounded bg-muted" />
-          </div>
-        </div>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
-  );
+  // Transform contracts directly - no state, no effects, no loops
+  const contracts: ContractItem[] = initialContracts
+    .map((contract: Contract) => {
+      // Extract key from pdfUrl (assuming format: https://o6dbw19iyd.ufs.sh/f/{key})
+      const urlParts = contract.pdfUrl.split("/");
+      const key = urlParts[urlParts.length - 1];
 
-  // Transform contracts when they change
-  useEffect(() => {
-    // Mark contracts as loaded when we receive them from the server
-    // This includes empty arrays - it means the server responded
-    setContractsLoaded(true);
-
-    const contractItems: ContractItem[] = initialContracts.map(
-      (contract: Contract) => {
-        // Extract key from pdfUrl (assuming format: https://o6dbw19iyd.ufs.sh/f/{key})
-        const urlParts = contract.pdfUrl.split("/");
-        const key = urlParts[urlParts.length - 1];
-
-        return {
-          id: contract.id,
-          pdfName: contract.pdfName,
-          createdAt: contract.createdAt,
-          key: key,
-        };
-      },
-    );
-
-    // Sort by most recent first
-    contractItems.sort(
+      return {
+        id: contract.id,
+        pdfName: contract.pdfName,
+        createdAt: contract.createdAt,
+        key: key,
+      };
+    })
+    .sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
-    setContracts(contractItems);
-  }, [initialContracts]);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -179,9 +153,39 @@ export function AppSidebarClient({
                   {!isLoaded || (user && !contractsLoaded) ? (
                     // Show skeletons while loading user data OR while loading contracts for authenticated user
                     <>
-                      <ContractSkeleton />
-                      <ContractSkeleton />
-                      <ContractSkeleton />
+                      <SidebarMenuItem className="w-full">
+                        <SidebarMenuButton className="w-full cursor-default">
+                          <div className="flex w-full items-center gap-2">
+                            <div className="h-4 w-4 animate-pulse rounded bg-muted" />
+                            <div className="flex-1 space-y-1">
+                              <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+                              <div className="h-2 w-1/2 animate-pulse rounded bg-muted" />
+                            </div>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem className="w-full">
+                        <SidebarMenuButton className="w-full cursor-default">
+                          <div className="flex w-full items-center gap-2">
+                            <div className="h-4 w-4 animate-pulse rounded bg-muted" />
+                            <div className="flex-1 space-y-1">
+                              <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+                              <div className="h-2 w-1/2 animate-pulse rounded bg-muted" />
+                            </div>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                      <SidebarMenuItem className="w-full">
+                        <SidebarMenuButton className="w-full cursor-default">
+                          <div className="flex w-full items-center gap-2">
+                            <div className="h-4 w-4 animate-pulse rounded bg-muted" />
+                            <div className="flex-1 space-y-1">
+                              <div className="h-3 w-3/4 animate-pulse rounded bg-muted" />
+                              <div className="h-2 w-1/2 animate-pulse rounded bg-muted" />
+                            </div>
+                          </div>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
                     </>
                   ) : !user ? (
                     // Show not logged in only after we're sure user is not authenticated

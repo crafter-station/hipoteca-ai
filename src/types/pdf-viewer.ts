@@ -32,6 +32,29 @@ export interface PDFViewerProps {
   className?: string;
   instanceId?: string;
   highlights?: HighlightAnnotation[];
+  // Toolbar functions for external header
+  onPreviousPage?: () => void;
+  onNextPage?: () => void;
+  onZoomIn?: () => void;
+  onZoomOut?: () => void;
+  onToggleFullscreen?: () => void;
+  onToggleSearch?: () => void;
+  // PDF state for external header
+  currentPage?: number;
+  totalPages?: number;
+  scale?: number;
+  // Callback to expose PDF viewer functions
+  onPDFViewerReady?: (viewerState: {
+    currentPage: number;
+    totalPages: number;
+    scale: number;
+    onPreviousPage: () => void;
+    onNextPage: () => void;
+    onZoomIn: () => void;
+    onZoomOut: () => void;
+    onToggleFullscreen: () => void;
+    onToggleSearch: () => void;
+  }) => void;
 }
 
 export interface TextMatch {
