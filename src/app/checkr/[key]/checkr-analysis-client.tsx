@@ -7,7 +7,7 @@ import {
 import { TriggerProvider } from "@/components/TriggerProvider";
 import { AppSidebarClient } from "@/components/app-sidebar-client";
 import { PDFHeader } from "@/components/pdf-viewer";
-import PDFViewer from "@/components/pdf-viewer/pdf-viewer";
+import PDFViewer from "@/components/pdf-viewer";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import type { Contract, ContractHighlight } from "@/models/contract";
 import { ContractHighlightType } from "@/models/contract";
