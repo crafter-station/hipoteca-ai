@@ -1402,6 +1402,24 @@ export function PDFCanvas({
                       margin: "0px",
                       padding: "0px",
                     }}
+                    onMouseUp={(e) => {
+                      const selection = window.getSelection();
+                      if (selection && selection.toString().trim().length > 0) {
+                        // Check if selection is within this textLayer
+                        let node = selection.anchorNode;
+                        let found = false;
+                        while (node) {
+                          if (node === e.currentTarget) {
+                            found = true;
+                            break;
+                          }
+                          node = node.parentNode;
+                        }
+                        if (found && typeof (window as any).onPDFTextSelect === 'function') {
+                          (window as any).onPDFTextSelect(selection.toString(), pageNum);
+                        }
+                      }
+                    }}
                   />
                 </div>
               </div>
