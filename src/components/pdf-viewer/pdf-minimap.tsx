@@ -368,7 +368,7 @@ export function PDFMinimap({
                 key={`minimap-page-${pageNum}`}
                 className={`absolute overflow-hidden border ${
                   isCurrentPage
-                    ? "border-primary bg-primary/20"
+                    ? "border-primary bg-primary/10"
                     : "border-border bg-muted/30"
                 }`}
                 style={{
@@ -452,7 +452,7 @@ export function PDFMinimap({
         {/* Viewport Highlight */}
         {viewportStyle.visible && (
           <div
-            className="minimap-viewport-highlight absolute left-0 w-full cursor-grab rounded-sm border border-primary bg-primary/30 active:cursor-grabbing"
+            className="minimap-viewport-highlight absolute left-0 w-full cursor-grab rounded-sm border border-primary bg-primary/20 active:cursor-grabbing"
             style={{
               top: `${viewportStyle.top}px`,
               height: `${Math.max(5, viewportStyle.height)}px`,
