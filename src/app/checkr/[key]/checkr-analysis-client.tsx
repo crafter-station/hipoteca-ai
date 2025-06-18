@@ -163,22 +163,24 @@ function TaskStatusIcon({ status }: { status: string }) {
 // Component with real-time updates (when we have runId and token)
 function CheckrAnalysisWithRealtime({
   keyParam,
+  runId,
   contracts,
 }: {
   keyParam: string;
+  runId: string;
   contracts: Contract[];
 }) {
   const router = useRouter();
   const [pdfData, setPdfData] = useState<PDFData | null>(null);
   const [contract, setContract] = useState<Contract | null>(null);
 
-  // Use the useRealtimeRun hook for real-time updates
-  const { run, error } = useRealtimeRun(keyParam);
+  // Use the useRealtimeRun hook for real-time updates with the actual runId
+  const { run, error } = useRealtimeRun(runId);
 
   return (
     <CheckrAnalysisContent
       keyParam={keyParam}
-      runId={keyParam}
+      runId={runId}
       token="temp"
       run={run}
       error={error}
@@ -801,15 +803,19 @@ export function CheckrAnalysisClient({
   token,
   contracts,
 }: CheckrAnalysisClientProps) {
-  // If we have a token, wrap with TriggerProvider for real-time updates
-  if (token) {
+  // If we have a token and runId, wrap with TriggerProvider for real-time updates
+  if (token && runId) {
     return (
       <TriggerProvider accessToken={token}>
-        <CheckrAnalysisWithRealtime keyParam={keyParam} contracts={contracts} />
+        <CheckrAnalysisWithRealtime
+          keyParam={keyParam}
+          runId={runId}
+          contracts={contracts}
+        />
       </TriggerProvider>
     );
   }
 
-  // No token - render without TriggerProvider (direct contract access mode)
+  // No token or runId - render without TriggerProvider (direct contract access mode)
   return <CheckrAnalysisStatic keyParam={keyParam} contracts={contracts} />;
 }
