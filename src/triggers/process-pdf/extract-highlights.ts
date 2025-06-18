@@ -79,6 +79,13 @@ Con la cláusula normalizada, redacta un párrafo que explique clara y concisame
   - Riesgos principales para las partes.
   - Otra información importante que hayas encontrado y que sea necesario mencionar.
 
+4. **Resumen de descripción**
+Con la descripción actual, genera un resumen muy preciso y directo, sin repetir la información del término original para no ser redundante.
+  - El resumen debe caber en una oracion corta de como máximo 30 palabras.
+  - El resumen debe resaltar lo mas importante.
+  - Este resumen irá a la salida como valor del campo "description".
+  - IMPORTANTE: Ten en cuenta que esta descripción se mostrará en un tooltip pequeño, por lo que no debe ser muy larga.
+
 FORMATO DE SALIDA:
 Devuelve exactamente este formato (remueve los \`\`\`json \`\`\`):
 {
