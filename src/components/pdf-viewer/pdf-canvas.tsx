@@ -90,7 +90,6 @@ interface PDFCanvasProps {
   shouldAutoScroll?: boolean;
   onAutoScrollComplete?: () => void;
   scale: number;
-  isFullscreen: boolean;
   instanceId: string;
   searchTerm: string;
   searchMode: SearchMode;
@@ -102,8 +101,6 @@ interface PDFCanvasProps {
   onNavigateToResult: (index: number) => void;
   // Callback to report page highlight data for minimap
   onPageHighlightData?: (data: Map<number, { annotations: Array<{ type: string; position: number }>; searchResults: Array<{ position: number }> }>) => void;
-  // Callback for text selection questions
-  onTextSelectionQuestion?: (question: string, selectedText: string) => Promise<void>;
 }
 
 const DEBUG = false;
@@ -118,7 +115,6 @@ export function PDFCanvas({
   shouldAutoScroll = true,
   onAutoScrollComplete,
   scale,
-  isFullscreen,
   instanceId,
   searchTerm,
   searchMode,
@@ -129,7 +125,6 @@ export function PDFCanvas({
   highlights,
   onNavigateToResult,
   onPageHighlightData,
-  onTextSelectionQuestion,
 }: PDFCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<

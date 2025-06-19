@@ -10,15 +10,7 @@ import { ArrowUpFromLine, Plus, Sparkles, X, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
-interface UploadEmptyStateProps {
-  onFileUploaded?: (file: File, url: string) => void;
-  className?: string;
-}
-
-export function UploadEmptyState({
-  onFileUploaded,
-  className,
-}: UploadEmptyStateProps) {
+export function UploadEmptyState() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -106,12 +98,7 @@ export function UploadEmptyState({
   // File Preview State
   if (selectedFile) {
     return (
-      <div
-        className={cn(
-          "flex h-full w-full items-center justify-center p-8",
-          className,
-        )}
-      >
+      <div className="flex h-full w-full items-center justify-center p-8">
         <div className="w-full max-w-xl space-y-6">
           {/* Header - Same height as initial state */}
           <div className="space-y-2 text-center">
@@ -218,12 +205,7 @@ export function UploadEmptyState({
 
   // Initial Upload State
   return (
-    <div
-      className={cn(
-        "flex h-full w-full items-center justify-center p-8",
-        className,
-      )}
-    >
+    <div className="flex h-full w-full items-center justify-center p-8">
       <div className="w-full max-w-xl space-y-6">
         {/* Header */}
         <div className="space-y-2 text-center">
