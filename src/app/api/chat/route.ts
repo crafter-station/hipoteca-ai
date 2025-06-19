@@ -1,6 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import {
   type Message,
+  type Tool,
   appendClientMessage,
   appendResponseMessages,
   createIdGenerator,
@@ -9,11 +10,9 @@ import {
 } from "ai";
 
 import { generateUserId } from "@/lib/user-identification";
-import {
-  CONTRACT_CONTEXT_DOCUMENT_ID,
-  MORTGAGE_KNOWLEDGE_DOCUMENT_ID,
-} from "@/models/constants";
-import { systemPrompt } from "@/prompts/system";
+import { MORTGAGE_KNOWLEDGE_DOCUMENT_ID } from "@/models/constants";
+import { getContractIdByKey } from "@/models/contract";
+import { CHAT_SYSTEM_PROMPT } from "@/prompts/chat-system-prompt";
 import { getMessages, setMessages } from "@/redis";
 import {
   isChatOwnedByUser,
@@ -27,6 +26,7 @@ import { getTracer } from "@lmnr-ai/lmnr";
 interface ChatRequest {
   message: Message;
   chat_id: string;
+  contract_id: string;
 }
 
 export async function GET(req: Request) {
@@ -44,6 +44,7 @@ async function getChatTitle(messages: Message[]) {
 			The title should be a single word or phrase that captures the essence of the chat.
 			The title should be no more than 10 words.
 			Do not include any other text in your response.
+      Title must be in the same language as the messages.
 
 			<Chat>
 				${messages.map((m) => `<Message role="${m.role}" createdAt="${m.createdAt?.toISOString()}" content="${m.content}">${m.content}</Message>`).join("\n")}
@@ -56,16 +57,23 @@ async function getChatTitle(messages: Message[]) {
 
 export async function POST(req: Request) {
   try {
+    // Generate user ID from request headers
+    const userId = generateUserId(getUserHeaders(req));
+
     const body = (await req.json()) as ChatRequest;
-    const { message: rawMessage, chat_id } = body;
+    const { message: rawMessage, chat_id, contract_id: key } = body;
     const message = {
       ...rawMessage,
       createdAt: new Date(rawMessage.createdAt ?? new Date().toISOString()),
     };
 
-    // Generate user ID from request headers
-    const userId = generateUserId(getUserHeaders(req));
-
+    const contractId = await getContractIdByKey(key);
+    if (!contractId && key) {
+      return new Response(JSON.stringify({ error: "Contract not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
     // Validate required fields
     if (!message || !chat_id) {
       return new Response(
@@ -93,9 +101,19 @@ export async function POST(req: Request) {
       message,
     });
 
+    const tools: Record<string, Tool> = {
+      searchMortgageKnowledge: createSearchMortgageKnowledgeTool(
+        MORTGAGE_KNOWLEDGE_DOCUMENT_ID,
+      ),
+    };
+
+    if (contractId) {
+      tools.searchContractContext = createSearchContractContextTool(contractId);
+    }
+
     const result = streamText({
       model: openai("gpt-4.1-nano"),
-      system: systemPrompt,
+      system: CHAT_SYSTEM_PROMPT,
       messages,
       async onFinish({ response }) {
         const updatedMessages = appendResponseMessages({
@@ -115,14 +133,7 @@ export async function POST(req: Request) {
       experimental_generateMessageId: createIdGenerator({
         size: 16,
       }),
-      tools: {
-        searchContractContext: createSearchContractContextTool(
-          CONTRACT_CONTEXT_DOCUMENT_ID,
-        ),
-        searchMortgageKnowledge: createSearchMortgageKnowledgeTool(
-          MORTGAGE_KNOWLEDGE_DOCUMENT_ID,
-        ),
-      },
+      tools,
       maxSteps: 10,
       experimental_telemetry: {
         isEnabled: true,

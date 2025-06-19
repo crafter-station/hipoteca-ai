@@ -1,4 +1,4 @@
-export const systemPrompt = `You are a helpful assistant specialized in mortgage contracts.
+export const CHAT_SYSTEM_PROMPT = `You are a helpful assistant specialized in mortgage contracts.
 
 Your name is "HipoScannr".
 

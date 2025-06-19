@@ -47,11 +47,6 @@ export default function PDFViewer({
   instanceId = "default",
   highlights = [],
   contract,
-  // External toolbar functions
-  onPreviousPage: externalOnPreviousPage,
-  onNextPage: externalOnNextPage,
-  onZoomIn: externalOnZoomIn,
-  onZoomOut: externalOnZoomOut,
   onToggleFullscreen: externalOnToggleFullscreen,
   onToggleSearch: externalOnToggleSearch,
   // Callback to expose PDF viewer functions
@@ -59,8 +54,6 @@ export default function PDFViewer({
   // Minimap control
   showMinimap = true,
   onMinimapNavigation,
-  // Text selection callback
-  onTextSelectionQuestion,
 }: PDFViewerProps) {
   console.log({ highlights, pdfUrl, instanceId });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -404,7 +397,6 @@ export default function PDFViewer({
           shouldAutoScroll={pdfViewer.shouldAutoScroll}
           onAutoScrollComplete={() => pdfViewer.setShouldAutoScroll(false)}
           scale={pdfViewer.scale}
-          isFullscreen={pdfViewer.isFullscreen}
           instanceId={instanceId}
           searchTerm={pdfSearch.searchTerm}
           searchMode={pdfSearch.searchMode}
@@ -415,7 +407,6 @@ export default function PDFViewer({
           highlights={highlights}
           onNavigateToResult={handleNavigateToResult}
           onPageHighlightData={handlePageHighlightData}
-          onTextSelectionQuestion={onTextSelectionQuestion}
         />
       </div>
 
