@@ -39,6 +39,8 @@ export async function extractHighlightsFromContent(
       ", ",
     )}.
 - Devuelve ÚNICAMENTE un JSON válido sin código markdown ni explicaciones adicionales.
+- IMPORTANTE: Convierte cualquier notación matemática LaTeX (como $\\mathrm{CO}^{2}$) a texto plano (como CO2).
+- IMPORTANTE: Evita caracteres especiales que puedan causar problemas en JSON.
 
 Formato JSON requerido:
 {
@@ -52,8 +54,15 @@ Formato JSON requerido:
       prompt: `${prompt}\n\nTexto:\n${chunk.content}`,
     });
 
-    // Clean the text response to remove any markdown formatting
-    const cleanedText = text.replace(/```json\s*|\s*```/g, "").trim();
+    // Clean the text response to remove any markdown formatting and fix JSON issues
+    let cleanedText = text.replace(/```json\s*|\s*```/g, "").trim();
+
+    // Handle common LaTeX mathematical notation that causes JSON parsing issues
+    cleanedText = cleanedText
+      .replace(/\$\\mathrm\{([^}]+)\}\^?\{?([^}]*)\}?\$/g, "$1$2") // Convert $\mathrm{CO}^{2}$ to CO2
+      .replace(/\$\\text\{([^}]+)\}/g, "$1") // Convert $\text{...}$ to plain text
+      .replace(/\$([^$]+)\$/g, "$1") // Remove simple $ delimiters
+      .replace(/\\([a-zA-Z]+)/g, "$1"); // Remove backslashes from LaTeX commands
 
     let parsed: z.infer<typeof ClassificationSchema>;
     try {
@@ -121,8 +130,15 @@ Tipo: ${highlight.type}`;
         maxSteps: 3,
       });
 
-      // Clean the text response to remove any markdown formatting
-      const cleanedText = text.replace(/```json\s*|\s*```/g, "").trim();
+      // Clean the text response to remove any markdown formatting and fix JSON issues
+      let cleanedText = text.replace(/```json\s*|\s*```/g, "").trim();
+
+      // Handle common LaTeX mathematical notation that causes JSON parsing issues
+      cleanedText = cleanedText
+        .replace(/\$\\mathrm\{([^}]+)\}\^?\{?([^}]*)\}?\$/g, "$1$2") // Convert $\mathrm{CO}^{2}$ to CO2
+        .replace(/\$\\text\{([^}]+)\}/g, "$1") // Convert $\text{...}$ to plain text
+        .replace(/\$([^$]+)\$/g, "$1") // Remove simple $ delimiters
+        .replace(/\\([a-zA-Z]+)/g, "$1"); // Remove backslashes from LaTeX commands
 
       let parsed: z.infer<typeof DescriptionSchema>;
       try {
