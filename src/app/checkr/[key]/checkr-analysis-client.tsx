@@ -661,6 +661,7 @@ function CheckrAnalysisContent({
             status={status}
             isLoading={isLoadingContract}
             // Toolbar props
+            contract={contract}
             currentPage={pdfViewerState.currentPage}
             totalPages={pdfViewerState.totalPages}
             scale={pdfViewerState.scale}

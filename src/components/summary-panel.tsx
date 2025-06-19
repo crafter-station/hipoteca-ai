@@ -348,7 +348,7 @@ function HealthGauge({ score }: HealthGaugeProps) {
                 <Info className="ml-1 h-3 w-3" />
               </p>
             </TooltipTrigger>
-            <TooltipContent className="w-60 rounded-md border bg-card p-3 text-card-foreground text-xs shadow-lg">
+            <TooltipContent className="w-60 rounded-md border bg-card p-3 text-card-foreground text-xs shadow-lg [&_svg]:bg-card [&_svg]:fill-card">
               <p className="mb-2 font-medium">Escala de Riesgo (1-100):</p>
               <div className="space-y-1">
                 <p>

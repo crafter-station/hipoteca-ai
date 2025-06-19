@@ -101,7 +101,7 @@ export function AppSidebarClient({
         <SidebarHeader>
           <div className="flex items-center gap-2">
             <Logo className="size-8" />
-            <span className="font-semibold text-sm">HipoCheckr</span>
+            <span className="font-semibold text-sm">HipotecaFindr</span>
           </div>
 
           {/* Nueva Hipoteca - Styled like v0 */}

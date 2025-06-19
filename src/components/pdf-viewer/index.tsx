@@ -1,20 +1,11 @@
 "use client";
-
-import SummaryPanel from "@/components/summary-panel";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import {} from "@/components/ui/sheet";
 import { usePDFHighlights } from "@/hooks/use-pdf-highlights";
 import { usePDFSearch } from "@/hooks/use-pdf-search";
 import { usePDFViewer } from "@/hooks/use-pdf-viewer";
 import type { PDFViewerProps } from "@/types/pdf-viewer";
-import { BarChart3 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PDFCanvas } from "./pdf-canvas";
 import { PDFMinimap } from "./pdf-minimap";
@@ -82,17 +73,10 @@ export default function PDFViewer({
       }
     >
   >(new Map());
-
-  // State for summary sheet
-  const [summaryOpen, setSummaryOpen] = useState(false);
-
   // Custom hooks
   const pdfViewer = usePDFViewer(pdfUrl);
   const pdfSearch = usePDFSearch();
   const pdfHighlights = usePDFHighlights(instanceId);
-
-  // Get summary data directly from contract prop
-  const summaryData = contract?.summary || null;
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -451,37 +435,6 @@ export default function PDFViewer({
           className="w-32 flex-shrink-0"
         />
       )}
-
-      {/* Summary Sheet */}
-      <Sheet open={summaryOpen} onOpenChange={setSummaryOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="-translate-y-1/2 fixed top-1/2 right-4 z-40 h-12 w-12 rounded-full shadow-lg"
-          >
-            <BarChart3 className="h-6 w-6" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="right" className="w-[400px] p-0 sm:w-[400px]">
-          <SheetHeader className="px-6 pt-6">
-            <SheetTitle className="text-xl">Resumen de Hipoteca</SheetTitle>
-          </SheetHeader>
-          <div className="h-[calc(100vh-80px)] overflow-auto">
-            {summaryData ? (
-              <SummaryPanel data={summaryData} />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <div className="text-center">
-                  <p className="text-muted-foreground">
-                    No hay datos de análisis disponibles
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
     </div>
   );
 }

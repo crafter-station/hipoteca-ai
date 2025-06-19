@@ -2,7 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import type { Contract } from "@/models/contract";
 import {
+  BarChart3,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -12,12 +14,22 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import { useState } from "react";
+import SummaryPanel from "../summary-panel";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "../ui/sheet";
 import { HighlightLegend } from "./highlight-legend";
 
 interface PDFHeaderProps {
   pdfName?: string;
   status: string;
   isLoading?: boolean;
+  contract: Contract | null;
   // Toolbar props
   currentPage?: number;
   totalPages?: number;
@@ -93,6 +105,7 @@ export function PDFHeader({
   pdfName,
   status,
   isLoading = false,
+  contract,
   // Toolbar props
   currentPage,
   totalPages,
@@ -110,6 +123,8 @@ export function PDFHeader({
 
   // Show toolbar controls only when PDF is loaded
   const showToolbarControls = currentPage && totalPages && scale !== undefined;
+
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 m-2 rounded-lg border border-border bg-sidebar shadow-sm">
@@ -208,6 +223,38 @@ export function PDFHeader({
 
             {/* Action Controls - Responsive visibility */}
             <div className="flex items-center gap-0.5 sm:gap-1">
+              {/* Summary Sheet */}
+              <Sheet open={summaryOpen} onOpenChange={setSummaryOpen}>
+                <SheetTrigger asChild>
+                  <Button size="sm" className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Resumen
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="w-[400px] p-0 sm:w-[400px]"
+                >
+                  <SheetHeader className="px-6 pt-6">
+                    <SheetTitle className="text-xl">
+                      Resumen de Hipoteca
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="h-[calc(100vh-80px)] overflow-auto">
+                    {contract?.summary ? (
+                      <SummaryPanel data={contract.summary} />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <div className="text-center">
+                          <p className="text-muted-foreground">
+                            No hay datos de análisis disponibles
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
               {/* Legend - Hide on mobile */}
               <div className="hidden sm:block">
                 <HighlightLegend />

@@ -118,7 +118,7 @@ export function UploadEmptyState({
             <div className="mx-auto flex h-20 items-center justify-center">
               <img
                 src="/eye-blueprint.webp"
-                alt="HipoCheckr"
+                alt="HipotecaFindr"
                 width={80}
                 height={80}
               />
@@ -230,7 +230,7 @@ export function UploadEmptyState({
           <div className="mx-auto flex items-center justify-center">
             <img
               src="/pdf-blueprint.webp"
-              alt="HipoCheckr"
+              alt="HipotecaFindr"
               width={80}
               height={80}
             />

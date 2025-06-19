@@ -34,13 +34,16 @@ export async function extractHighlightsFromContent(
   const partialResults = await processInParallel(chunks, async (chunk) => {
     const prompt = `Eres un extractor de highlights de contratos hipotecarios.
 
-– Solo usas el texto dado por el usuario.
-– Devuelves hasta 5 frases textuales del contrato que correspondan a uno de estos tipos: ${allContractHighlightTypes().join(", ")}.
-– Devuelve solo un JSON con este formato (remueve los \`\`\`json \`\`\`)
+- Solo usas el texto dado por el usuario.
+- Devuelves hasta 5 frases textuales del contrato que correspondan a uno de estos tipos: ${allContractHighlightTypes().join(
+      ", ",
+    )}.
+- Devuelve ÚNICAMENTE un JSON válido sin código markdown ni explicaciones adicionales.
 
+Formato JSON requerido:
 {
   "highlights": [
-    { "sentence": string, "type": string }
+    { "sentence": "texto exacto del contrato", "type": "tipo_de_highlight" }
   ]
 }`;
 
@@ -49,7 +52,20 @@ export async function extractHighlightsFromContent(
       prompt: `${prompt}\n\nTexto:\n${chunk.content}`,
     });
 
-    const parsed = ClassificationSchema.parse(JSON.parse(text));
+    // Clean the text response to remove any markdown formatting
+    const cleanedText = text.replace(/```json\s*|\s*```/g, "").trim();
+
+    let parsed: z.infer<typeof ClassificationSchema>;
+    try {
+      parsed = ClassificationSchema.parse(JSON.parse(cleanedText));
+    } catch (parseError) {
+      console.error("JSON parsing error:", parseError);
+      console.error("Raw text:", text);
+      console.error("Cleaned text:", cleanedText);
+      const errorMessage =
+        parseError instanceof Error ? parseError.message : "Unknown error";
+      throw new Error(`Failed to parse JSON response: ${errorMessage}`);
+    }
 
     return parsed.highlights.filter((h) =>
       allContractHighlightTypes().includes(h.type as ContractHighlightType),
@@ -87,9 +103,9 @@ Con la descripción actual, genera un resumen muy preciso y directo, sin repetir
   - IMPORTANTE: Ten en cuenta que esta descripción se mostrará en un tooltip pequeño, por lo que no debe ser muy larga.
 
 FORMATO DE SALIDA:
-Devuelve exactamente este formato (remueve los \`\`\`json \`\`\`):
+Devuelve ÚNICAMENTE un JSON válido sin código markdown ni explicaciones adicionales:
 {
-  "description": string
+  "description": "tu descripción aquí"
 }
 
 Donde "description" es lo del paso 3.
@@ -105,7 +121,22 @@ Tipo: ${highlight.type}`;
         maxSteps: 3,
       });
 
-      const parsed = DescriptionSchema.parse(JSON.parse(text));
+      // Clean the text response to remove any markdown formatting
+      const cleanedText = text.replace(/```json\s*|\s*```/g, "").trim();
+
+      let parsed: z.infer<typeof DescriptionSchema>;
+      try {
+        parsed = DescriptionSchema.parse(JSON.parse(cleanedText));
+      } catch (parseError) {
+        console.error("JSON parsing error in description:", parseError);
+        console.error("Raw text:", text);
+        console.error("Cleaned text:", cleanedText);
+        const errorMessage =
+          parseError instanceof Error ? parseError.message : "Unknown error";
+        throw new Error(
+          `Failed to parse description JSON response: ${errorMessage}`,
+        );
+      }
 
       return {
         ...highlight,
