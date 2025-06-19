@@ -11,7 +11,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type Message, createIdGenerator } from "ai";
 import { MessageCircle, Send } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useState } from "react";
 import { ChatToolbar } from "./chat-toolbar";
 import { Sources } from "./sources";
 import { useChatId } from "./use-chat-id";
@@ -19,7 +18,6 @@ import { useChatOpen } from "./use-chat-open";
 
 export function ChatPopup() {
   const [isOpen, setIsOpen] = useChatOpen();
-  const [isMinimized, setIsMinimized] = useState(false);
   const queryClient = useQueryClient();
 
   const [chatId] = useChatId();
@@ -62,19 +60,6 @@ export function ChatPopup() {
       handleSubmit(e);
     }
   };
-
-  if (isMinimized) {
-    return (
-      <div className="fixed right-6 bottom-6 z-50">
-        <Button
-          onClick={() => setIsMinimized(false)}
-          className="h-14 w-14 rounded-full bg-blue-600 p-0 shadow-lg transition-all hover:scale-110 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-        >
-          <MessageCircle className="h-6 w-6 text-white" />
-        </Button>
-      </div>
-    );
-  }
 
   if (!isOpen) {
     return (
