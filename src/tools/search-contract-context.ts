@@ -66,7 +66,7 @@ export const createSearchContractContextTool = (documentId: string) =>
         return `<contract-context>\n${allChunks
           .map(
             ({ properties: { chunkIndex, content, pageIndex } }) =>
-              `  <chunk>\n    <chunkIndex>${chunkIndex}</chunkIndex>\n    <content>${content}</content>\n    <pageNumber>${pageIndex}</pageNumber>\n  </chunk>`,
+              `  <chunk>\n    <chunkIndex>${chunkIndex}</chunkIndex>\n    <content>${content}</content>\n    <pageNumber>${pageIndex + 1}</pageNumber>\n  </chunk>`,
           )
           .join("\n")}\n</contract-context>`;
       } catch (error) {
