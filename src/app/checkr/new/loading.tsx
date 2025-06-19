@@ -1,5 +1,5 @@
 "use client";
 
-export default function CheckrNewLoading() {
+export default function CheckrLoading() {
   return <div>.</div>;
 }
