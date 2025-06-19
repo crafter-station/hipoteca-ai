@@ -13,14 +13,12 @@ import { streamText } from "ai";
 import { Filters } from "weaviate-client";
 
 export async function POST(req: Request) {
-  const { prompt, pageIndex, contractId: key } = await req.json();
-
-  console.log(prompt, pageIndex, key);
+  const { prompt, pageIndex, contractId: key, question } = await req.json();
 
   if (!prompt || pageIndex === null) {
     return new Response(
       JSON.stringify({
-        error: "Missing required query params: text, pageIndex",
+        error: "Missing required query params: prompt, pageIndex, contractId",
       }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     );
@@ -45,6 +43,11 @@ export async function POST(req: Request) {
     content: `<surrounding-text>${highlightedChunk}</surrounding-text>
     <highlighted-text>${prompt}</highlighted-text>`,
   };
+
+  if (question) {
+    userMessage.content = `${userMessage.content}
+    <question>${question}</question>`;
+  }
 
   const result = streamText({
     model: openai("gpt-4o-mini"),

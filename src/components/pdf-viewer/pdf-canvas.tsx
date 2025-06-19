@@ -1142,7 +1142,7 @@ export function PDFCanvas({
 
       // Call the explain API with the question and context
       await explainCompletion.complete(selectedText, {
-        body: { pageIndex, contractId: key },
+        body: { pageIndex, contractId: key, prompt: selectedText, question },
       });
 
       // Convert temporary highlight to permanent highlight
