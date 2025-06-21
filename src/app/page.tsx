@@ -173,7 +173,7 @@ export default function LandingPage() {
                 asChild
                 className="transform bg-primary px-8 py-6 text-lg text-primary-foreground shadow-lg transition-all duration-300 hover:scale-105 hover:bg-primary/90 hover:shadow-primary/40"
               >
-                <SmoothScrollLink href="/dashboard">
+                <SmoothScrollLink href="/checkr/new">
                   Analiza tu Contrato Gratis
                 </SmoothScrollLink>
               </Button>
@@ -214,7 +214,7 @@ export default function LandingPage() {
                 asChild
                 className="transform bg-primary px-8 py-4 text-lg text-primary-foreground shadow-lg transition-all duration-300 hover:scale-105 hover:bg-primary/90 hover:shadow-primary/40"
               >
-                <SmoothScrollLink href="/dashboard">
+                <SmoothScrollLink href="/checkr/new">
                   Prueba con tu Documento
                 </SmoothScrollLink>
               </Button>
@@ -319,7 +319,7 @@ export default function LandingPage() {
                   size="lg"
                   className="w-full transform bg-primary py-4 text-lg text-primary-foreground shadow-lg transition-all duration-300 hover:scale-105 hover:bg-primary/90 hover:shadow-primary/40"
                 >
-                  <SmoothScrollLink href="/dashboard">
+                  <SmoothScrollLink href="/checkr/new">
                     <FileUp className="mr-2 h-5 w-5" />
                     Subir Documento PDF
                   </SmoothScrollLink>
@@ -537,7 +537,7 @@ export default function LandingPage() {
                     "Soporte comunitario",
                   ],
                   cta: "Empezar Gratis",
-                  link: "/dashboard",
+                  link: "/checkr/new",
                 },
                 {
                   title: "Pro",
@@ -553,7 +553,7 @@ export default function LandingPage() {
                   ],
                   popular: true,
                   cta: "Elegir Pro",
-                  link: "/dashboard?plan=pro",
+                  link: "/checkr/new",
                 },
                 {
                   title: "Copilot+",
@@ -568,7 +568,7 @@ export default function LandingPage() {
                     "Soporte prioritario",
                   ],
                   cta: "Elegir Copilot+",
-                  link: "/dashboard?plan=copilot_plus",
+                  link: "/checkr/new",
                 },
               ].map((plan) => (
                 <ModernPricingCard
