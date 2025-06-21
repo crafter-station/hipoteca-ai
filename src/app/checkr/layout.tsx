@@ -1,5 +1,3 @@
-import { ChatPopup } from "@/components/chat";
-
 export default function CheckrLayout({
   children,
 }: {
@@ -8,7 +6,7 @@ export default function CheckrLayout({
   return (
     <>
       {children}
-      <ChatPopup />
+      {/* <ChatPopup /> */}
     </>
   );
 }

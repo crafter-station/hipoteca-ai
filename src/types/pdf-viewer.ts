@@ -59,6 +59,8 @@ export interface PDFViewerProps {
   }) => void;
   // Minimap control
   showMinimap?: boolean;
+  // Minimap compact mode (for when chat is open)
+  isMinimapCompact?: boolean;
   // Minimap navigation callback
   onMinimapNavigation?: (scrollPercentage: number) => void;
   // Text selection callback

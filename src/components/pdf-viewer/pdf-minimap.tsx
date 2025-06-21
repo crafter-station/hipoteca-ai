@@ -15,8 +15,10 @@ interface PDFMinimapProps {
       searchResults: Array<{ position: number }>;
     }
   >;
+  instanceId: string;
   onNavigation: (scrollPercentage: number) => void;
   className?: string;
+  isCompact?: boolean; // New prop for compact mode when chat is open
 }
 
 interface PageHighlight {
@@ -47,6 +49,7 @@ const HIGHLIGHT_COLORS = {
 } as const;
 
 const MINIMAP_WIDTH = 120; // px
+const MINIMAP_WIDTH_COMPACT = 20; // px - much thinner when chat is open
 const MINIMAP_PAGE_PADDING = 2; // px
 const MINIMAP_LINE_HEIGHT = 1.5; // px for simulated content lines
 
@@ -58,8 +61,10 @@ export function PDFMinimap({
   viewerClientHeight,
   viewerScrollHeight,
   pageHighlightData,
+  instanceId,
   onNavigation,
   className = "",
+  isCompact = false,
 }: PDFMinimapProps) {
   const minimapRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -206,6 +211,8 @@ export function PDFMinimap({
       if (!minimapRef.current || !viewerScrollHeight || !minimapContentHeight)
         return;
 
+      event.preventDefault(); // Prevent any default behavior
+
       const rect = minimapRef.current.getBoundingClientRect();
       const clickY = event.clientY - rect.top;
 
@@ -228,7 +235,10 @@ export function PDFMinimap({
           ? Math.max(0, Math.min(1, adjustedClickY / maxScrollableArea))
           : 0;
 
-      onNavigation(scrollPercentage);
+      // Use requestAnimationFrame for immediate response
+      requestAnimationFrame(() => {
+        onNavigation(scrollPercentage);
+      });
     },
     [
       minimapContentHeight,
@@ -256,6 +266,8 @@ export function PDFMinimap({
       )
         return;
 
+      event.preventDefault(); // Prevent text selection during drag
+
       const rect = minimapRef.current.getBoundingClientRect();
       const clickY = event.clientY - rect.top;
 
@@ -274,7 +286,10 @@ export function PDFMinimap({
           ? Math.max(0, Math.min(1, adjustedClickY / maxScrollableArea))
           : 0;
 
-      onNavigation(scrollPercentage);
+      // Use requestAnimationFrame for smoother updates
+      requestAnimationFrame(() => {
+        onNavigation(scrollPercentage);
+      });
     },
     [
       isDragging,
@@ -289,6 +304,7 @@ export function PDFMinimap({
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     document.body.style.userSelect = "";
+    document.body.style.cursor = "";
   }, []);
 
   // Add/remove global mouse event listeners
@@ -304,12 +320,16 @@ export function PDFMinimap({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
       document.body.style.userSelect = "";
+      document.body.style.cursor = "";
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // Calculate page dimensions in minimap
+  const currentMinimapWidth = isCompact ? MINIMAP_WIDTH_COMPACT : MINIMAP_WIDTH;
   const minimapPageActualHeight = pageHeight * scale;
-  const minimapPageWidth = pageHeight * (8.5 / 11) * scale; // Standard page aspect ratio
+  const minimapPageWidth = isCompact
+    ? currentMinimapWidth - MINIMAP_PAGE_PADDING * 2 // Use full width in compact mode
+    : pageHeight * (8.5 / 11) * scale; // Standard page aspect ratio
 
   // Don't render highlights if dimensions aren't ready yet
   const shouldRenderHighlights = scale > 0 && minimapPageActualHeight > 10;
@@ -321,10 +341,13 @@ export function PDFMinimap({
       {/* Minimap Content */}
       <div
         ref={minimapRef}
-        className="relative flex-1 cursor-pointer select-none overflow-hidden bg-card p-2"
+        className={`relative flex-1 select-none overflow-hidden bg-card transition-all duration-300 ${
+          isDragging ? "cursor-grabbing" : "cursor-pointer"
+        }`}
         style={{
-          width: `${MINIMAP_WIDTH}px`,
+          width: `${currentMinimapWidth}px`,
           minHeight: "400px", // Ensure minimum height for proper scaling
+          padding: isCompact ? "2px 1px" : "8px 2px",
         }}
         onMouseDown={handleMouseDown}
       >
@@ -365,15 +388,19 @@ export function PDFMinimap({
 
             return (
               <div
-                key={`minimap-page-${pageNum}`}
+                key={`${instanceId}-minimap-page-${pageNum}`}
                 className={`absolute overflow-hidden border ${
-                  isCurrentPage
+                  isCurrentPage && !isCompact
                     ? "border-primary bg-primary/10"
-                    : "border-border bg-muted/30"
+                    : isCurrentPage && isCompact
+                      ? "border-primary/50 bg-primary/5"
+                      : "border-border bg-muted/30"
                 }`}
                 style={{
                   top: `${pageTop + MINIMAP_PAGE_PADDING}px`,
-                  left: `${MINIMAP_PAGE_PADDING + (MINIMAP_WIDTH - MINIMAP_PAGE_PADDING * 2 - pageDisplayWidth) / 2}px`,
+                  left: isCompact
+                    ? `${MINIMAP_PAGE_PADDING}px`
+                    : `${MINIMAP_PAGE_PADDING + (MINIMAP_WIDTH - MINIMAP_PAGE_PADDING * 2 - pageDisplayWidth) / 2}px`,
                   height: `${pageDisplayHeight}px`,
                   width: `${pageDisplayWidth}px`,
                   boxSizing: "content-box",
@@ -390,13 +417,15 @@ export function PDFMinimap({
 
                     return (
                       <div
-                        key={`line-${pageNum}-${lineTop}`}
+                        key={`${instanceId}-line-${pageNum}-${lineTop}`}
                         className="bg-muted-foreground/20"
                         style={{
                           position: "absolute",
                           top: `${lineTop}px`,
-                          left: "2px",
-                          width: "calc(100% - 4px)",
+                          left: isCompact ? "1px" : "2px",
+                          width: isCompact
+                            ? "calc(100% - 2px)"
+                            : "calc(100% - 4px)",
                           height: `${Math.max(0.5, MINIMAP_LINE_HEIGHT - 0.5)}px`,
                         }}
                       />
@@ -420,24 +449,26 @@ export function PDFMinimap({
 
                     return (
                       <div
-                        key={`highlight-${pageNum}-${highlight.type}-${highlight.annotationType || "unknown"}-${highlight.position.toFixed(6)}`}
+                        key={`${instanceId}-highlight-${pageNum}-${highlightIndex}-${highlight.type}-${highlight.annotationType || "unknown"}-${highlight.position.toFixed(6)}`}
                         className="absolute rounded-sm"
                         style={{
                           top: `${Math.max(0, highlightTop - 2)}px`,
                           left: "0px",
                           width: "100%",
-                          height: "4px", // Más alto para ser más visible
+                          height: isCompact ? "6px" : "4px", // Más alto en modo compacto
                           backgroundColor: color,
-                          opacity: highlight.type === "search" ? 0.9 : 0.8, // Más opaco
-                          borderRadius: "1px",
-                          boxShadow: `0 0 2px ${color}`, // Glow effect
+                          opacity: highlight.type === "search" ? 0.9 : 0.85, // Más opaco
+                          borderRadius: isCompact ? "2px" : "1px",
+                          boxShadow: isCompact
+                            ? `0 0 3px ${color}`
+                            : `0 0 2px ${color}`, // Más glow en compacto
                         }}
                       />
                     );
                   })}
 
-                {/* Page number indicator for current page */}
-                {isCurrentPage && (
+                {/* Page number indicator for current page - hide in compact mode */}
+                {isCurrentPage && !isCompact && (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="rounded bg-primary/80 px-1 font-bold text-primary-foreground text-xs">
                       {pageNum}
@@ -452,17 +483,22 @@ export function PDFMinimap({
         {/* Viewport Highlight */}
         {viewportStyle.visible && (
           <div
-            className="minimap-viewport-highlight absolute left-0 w-full cursor-grab rounded-sm border border-primary bg-primary/20 active:cursor-grabbing"
+            className={`minimap-viewport-highlight absolute left-0 w-full rounded-sm border border-primary bg-primary/20 transition-opacity duration-150 hover:bg-primary/30 ${
+              isDragging ? "cursor-grabbing bg-primary/40" : "cursor-grab"
+            }`}
             style={{
               top: `${viewportStyle.top}px`,
               height: `${Math.max(5, viewportStyle.height)}px`,
               willChange: "top, height",
+              userSelect: "none",
             }}
             onMouseDown={(e) => {
               e.stopPropagation(); // Prevent triggering the container's onMouseDown
+              e.preventDefault(); // Prevent text selection
               setIsDragging(true);
               handleNavigation(e);
               document.body.style.userSelect = "none";
+              document.body.style.cursor = "grabbing";
             }}
           />
         )}

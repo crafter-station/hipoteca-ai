@@ -101,6 +101,9 @@ interface PDFCanvasProps {
   onNavigateToResult: (index: number) => void;
   // Callback to report page highlight data for minimap
   onPageHighlightData?: (data: Map<number, { annotations: Array<{ type: string; position: number }>; searchResults: Array<{ position: number }> }>) => void;
+  // Programmatic scroll control
+  scrollTop?: number;
+  onScrollChange?: (scrollTop: number, scrollHeight: number, clientHeight: number) => void;
 }
 
 const DEBUG = false;
@@ -125,6 +128,8 @@ export function PDFCanvas({
   highlights,
   onNavigateToResult,
   onPageHighlightData,
+  scrollTop,
+  onScrollChange,
 }: PDFCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<
@@ -1262,6 +1267,29 @@ export function PDFCanvas({
     }
   }, [highlightService?.tooltipContent?.size, totalPages]); // Only trigger when size changes
 
+  // Handle programmatic scroll from minimap
+  useEffect(() => {
+    if (scrollTop !== undefined && containerRef.current) {
+      containerRef.current.scrollTop = scrollTop;
+    }
+  }, [scrollTop]);
+
+  // Report scroll changes to parent (for minimap sync)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !onScrollChange) return;
+
+    const handleScroll = () => {
+      onScrollChange(container.scrollTop, container.scrollHeight, container.clientHeight);
+    };
+
+    // Initial report
+    handleScroll();
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [onScrollChange, totalPages]); // Re-setup when pages change
+
   // Scroll to current page when it changes (only if shouldAutoScroll is true)
   useEffect(() => {
     if (currentPage && totalPages > 0 && shouldAutoScroll) {
@@ -1331,7 +1359,7 @@ export function PDFCanvas({
 
   return (
     <>
-      <div ref={containerRef} className="flex-1 overflow-auto bg-muted px-4 py-8">
+      <div ref={containerRef} className="flex-1 overflow-auto bg-muted px-4 py-8 scrollbar-hide">
         <div className="flex flex-col items-center space-y-8">
           {Array.from({ length: totalPages }, (_, index) => {
             const pageNum = index + 1;

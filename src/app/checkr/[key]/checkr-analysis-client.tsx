@@ -6,6 +6,7 @@ import {
 } from "@/actions/get-processed-contract";
 import { TriggerProvider } from "@/components/TriggerProvider";
 import { AppSidebarClient } from "@/components/app-sidebar-client";
+import { ChatSidebar } from "@/components/chat-sidebar";
 import { PDFHeader } from "@/components/pdf-viewer";
 import PDFViewer from "@/components/pdf-viewer";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -285,6 +286,7 @@ function CheckrAnalysisContent({
   console.log({ contract });
   const [isLoadingContract, setIsLoadingContract] = useState(!runId); // Start loading if no runId
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Memoize highlights to prevent infinite re-renders - MUST be at top level
   const memoizedHighlights = useMemo(() => {
@@ -671,192 +673,203 @@ function CheckrAnalysisContent({
             onZoomOut={pdfViewerState.onZoomOut}
             onToggleFullscreen={pdfViewerState.onToggleFullscreen}
             onToggleSearch={pdfViewerState.onToggleSearch}
+            onToggleChat={() => setIsChatOpen(!isChatOpen)}
+            isChatOpen={isChatOpen}
           />
 
           <main className="flex-1 overflow-hidden p-2">
-            <div className="flex h-full flex-col gap-4">
-              {/* Processing Status or PDF Viewer */}
-              {isCompleted && pdfData ? (
-                <div className="flex-1 overflow-hidden rounded-lg border border-border bg-background">
-                  <PDFViewer
-                    pdfUrl={pdfData.url}
-                    className="h-full w-full"
-                    instanceId={`contract-${keyParam}`}
-                    highlights={memoizedHighlights}
-                    contract={contract}
-                    onPDFViewerReady={handlePDFViewerReady}
-                    onTextSelectionQuestion={handleTextSelectionQuestion}
-                    showMinimap={true}
-                  />
-                </div>
-              ) : status === "FAILED" ? (
-                <div className="flex flex-1 items-center justify-center">
-                  <div className="max-w-md space-y-4 text-center">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-destructive/20 to-destructive/5">
-                      <AlertCircle className="h-8 w-8 text-destructive" />
-                    </div>
-                    <div>
-                      <h3 className="mb-2 font-semibold text-foreground text-xl">
-                        Error en el Procesamiento
-                      </h3>
-                      <p className="text-muted-foreground text-sm">
-                        No se pudo procesar el contrato hipotecario
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : status === "CANCELED" ? (
-                <div className="flex flex-1 items-center justify-center">
-                  <div className="max-w-md space-y-4 text-center">
-                    <img
-                      src="/x-red-icon.webp"
-                      alt="Cancel"
-                      className="mx-auto h-24 w-24 dark:brightness-90 dark:contrast-125"
+            <div className="flex h-full gap-2">
+              <div className="flex flex-1 flex-col gap-4">
+                {/* Processing Status or PDF Viewer */}
+                {isCompleted && pdfData ? (
+                  <div className="flex-1 overflow-hidden rounded-lg border border-border bg-background">
+                    <PDFViewer
+                      pdfUrl={pdfData.url}
+                      className="h-full w-full"
+                      instanceId={`contract-${keyParam}`}
+                      highlights={memoizedHighlights}
+                      contract={contract}
+                      onPDFViewerReady={handlePDFViewerReady}
+                      onTextSelectionQuestion={handleTextSelectionQuestion}
+                      showMinimap={true}
+                      isMinimapCompact={isChatOpen}
                     />
-                    <div>
-                      <h3 className="mb-2 font-semibold text-foreground text-xl">
-                        Procesamiento Cancelado
-                      </h3>
-                      <p className="text-muted-foreground text-sm">
-                        El análisis del contrato fue cancelado
-                      </p>
+                  </div>
+                ) : status === "FAILED" ? (
+                  <div className="flex flex-1 items-center justify-center">
+                    <div className="max-w-md space-y-4 text-center">
+                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-destructive/20 to-destructive/5">
+                        <AlertCircle className="h-8 w-8 text-destructive" />
+                      </div>
+                      <div>
+                        <h3 className="mb-2 font-semibold text-foreground text-xl">
+                          Error en el Procesamiento
+                        </h3>
+                        <p className="text-muted-foreground text-sm">
+                          No se pudo procesar el contrato hipotecario
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : ["CRASHED", "TIMED_OUT"].includes(status) ? (
-                <div className="flex flex-1 items-center justify-center">
-                  <div className="max-w-md space-y-4 text-center">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-destructive/20 to-destructive/5">
-                      <AlertCircle className="h-8 w-8 text-destructive" />
-                    </div>
-                    <div>
-                      <h3 className="mb-2 font-semibold text-foreground text-xl">
-                        {status === "CRASHED"
-                          ? "Error Crítico"
-                          : "Tiempo Agotado"}
-                      </h3>
-                      <p className="text-muted-foreground text-sm">
-                        {status === "CRASHED"
-                          ? "Ocurrió un error crítico durante el procesamiento"
-                          : "El procesamiento excedió el tiempo límite"}
-                      </p>
+                ) : status === "CANCELED" ? (
+                  <div className="flex flex-1 items-center justify-center">
+                    <div className="max-w-md space-y-4 text-center">
+                      <img
+                        src="/x-red-icon.webp"
+                        alt="Cancel"
+                        className="mx-auto h-24 w-24 dark:brightness-90 dark:contrast-125"
+                      />
+                      <div>
+                        <h3 className="mb-2 font-semibold text-foreground text-xl">
+                          Procesamiento Cancelado
+                        </h3>
+                        <p className="text-muted-foreground text-sm">
+                          El análisis del contrato fue cancelado
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex-1 rounded-lg border border-border/50 bg-muted/20 p-6">
-                  <div className="flex h-full flex-col items-center justify-center space-y-6">
-                    <img
-                      src="/clock-blueprint.webp"
-                      alt="Clock"
-                      className="h-16 w-16 dark:brightness-90 dark:contrast-110 dark:hue-rotate-180"
-                    />
-
-                    <div className="text-center">
-                      <h3 className="mb-2 font-semibold text-foreground text-xl">
-                        Procesando Contrato Hipotecario
-                      </h3>
-                      <p className="text-muted-foreground text-sm">
-                        Analizando tu contrato con inteligencia artificial...
-                      </p>
+                ) : ["CRASHED", "TIMED_OUT"].includes(status) ? (
+                  <div className="flex flex-1 items-center justify-center">
+                    <div className="max-w-md space-y-4 text-center">
+                      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-destructive/20 to-destructive/5">
+                        <AlertCircle className="h-8 w-8 text-destructive" />
+                      </div>
+                      <div>
+                        <h3 className="mb-2 font-semibold text-foreground text-xl">
+                          {status === "CRASHED"
+                            ? "Error Crítico"
+                            : "Tiempo Agotado"}
+                        </h3>
+                        <p className="text-muted-foreground text-sm">
+                          {status === "CRASHED"
+                            ? "Ocurrió un error crítico durante el procesamiento"
+                            : "El procesamiento excedió el tiempo límite"}
+                        </p>
+                      </div>
                     </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 rounded-lg border border-border/50 bg-muted/20 p-6">
+                    <div className="flex h-full flex-col items-center justify-center space-y-6">
+                      <img
+                        src="/clock-blueprint.webp"
+                        alt="Clock"
+                        className="h-16 w-16 dark:brightness-90 dark:contrast-110 dark:hue-rotate-180"
+                      />
 
-                    {runId && (
-                      <div className="w-full max-w-md rounded-lg border border-border/50 bg-background/50 p-4">
-                        <div className="mb-4 flex items-center justify-between">
-                          <h4 className="font-medium text-muted-foreground text-sm uppercase">
-                            Tareas de Procesamiento
-                          </h4>
-                          {status === "REATTEMPTING" && (
-                            <div className="flex items-center gap-1 text-orange-600 text-xs dark:text-orange-400">
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              Reintentando...
-                            </div>
-                          )}
-                        </div>
+                      <div className="text-center">
+                        <h3 className="mb-2 font-semibold text-foreground text-xl">
+                          Procesando Contrato Hipotecario
+                        </h3>
+                        <p className="text-muted-foreground text-sm">
+                          Analizando tu contrato con inteligencia artificial...
+                        </p>
+                      </div>
 
-                        <div className="space-y-3">
-                          {Object.entries(PROGRESS_STAGES).map(
-                            ([stage, description]) => {
-                              // If no currentStage (task in queue, not started, or just started executing), all tasks are pending
-                              if (!currentStage || status === "QUEUED") {
+                      {runId && (
+                        <div className="w-full max-w-md rounded-lg border border-border/50 bg-background/50 p-4">
+                          <div className="mb-4 flex items-center justify-between">
+                            <h4 className="font-medium text-muted-foreground text-sm uppercase">
+                              Tareas de Procesamiento
+                            </h4>
+                            {status === "REATTEMPTING" && (
+                              <div className="flex items-center gap-1 text-orange-600 text-xs dark:text-orange-400">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Reintentando...
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-3">
+                            {Object.entries(PROGRESS_STAGES).map(
+                              ([stage, description]) => {
+                                // If no currentStage (task in queue, not started, or just started executing), all tasks are pending
+                                if (!currentStage || status === "QUEUED") {
+                                  return (
+                                    <div
+                                      key={stage}
+                                      className="flex items-center justify-between rounded-md bg-muted/50 p-3 text-muted-foreground transition-colors"
+                                    >
+                                      <div>
+                                        <p className="font-medium text-sm">
+                                          {description}
+                                        </p>
+                                        <p className="text-xs opacity-80">
+                                          Pendiente
+                                        </p>
+                                      </div>
+                                      <TaskStatusIcon status="PENDING" />
+                                    </div>
+                                  );
+                                }
+
+                                const stageKeys = Object.keys(PROGRESS_STAGES);
+                                const currentStageIndex =
+                                  stageKeys.indexOf(currentStage);
+                                const thisStageIndex = stageKeys.indexOf(stage);
+
+                                const isCompleted =
+                                  currentStage === "completed" ||
+                                  currentStageIndex > thisStageIndex;
+
+                                const isCurrent = currentStage === stage;
+                                const isRetrying =
+                                  isCurrent && status === "REATTEMPTING";
+
+                                const taskStatus = isCompleted
+                                  ? "COMPLETED"
+                                  : isCurrent
+                                    ? isRetrying
+                                      ? "REATTEMPTING"
+                                      : "EXECUTING"
+                                    : "PENDING";
+
                                 return (
                                   <div
                                     key={stage}
-                                    className="flex items-center justify-between rounded-md bg-muted/50 p-3 text-muted-foreground transition-colors"
+                                    className={`flex items-center justify-between rounded-md p-3 transition-colors ${
+                                      isCompleted
+                                        ? "bg-green-50 text-green-900 dark:bg-green-950/20 dark:text-green-100"
+                                        : isCurrent
+                                          ? isRetrying
+                                            ? "bg-orange-50 text-orange-900 dark:bg-orange-950/20 dark:text-orange-100"
+                                            : "bg-blue-50 text-blue-900 dark:bg-blue-950/20 dark:text-blue-100"
+                                          : "bg-muted/50 text-muted-foreground"
+                                    }`}
                                   >
                                     <div>
                                       <p className="font-medium text-sm">
                                         {description}
                                       </p>
                                       <p className="text-xs opacity-80">
-                                        Pendiente
+                                        {isCompleted
+                                          ? "Completado"
+                                          : isCurrent
+                                            ? isRetrying
+                                              ? "Reintentando..."
+                                              : "En progreso"
+                                            : "Pendiente"}
                                       </p>
                                     </div>
-                                    <TaskStatusIcon status="PENDING" />
+                                    <TaskStatusIcon status={taskStatus} />
                                   </div>
                                 );
-                              }
-
-                              const stageKeys = Object.keys(PROGRESS_STAGES);
-                              const currentStageIndex =
-                                stageKeys.indexOf(currentStage);
-                              const thisStageIndex = stageKeys.indexOf(stage);
-
-                              const isCompleted =
-                                currentStage === "completed" ||
-                                currentStageIndex > thisStageIndex;
-
-                              const isCurrent = currentStage === stage;
-                              const isRetrying =
-                                isCurrent && status === "REATTEMPTING";
-
-                              const taskStatus = isCompleted
-                                ? "COMPLETED"
-                                : isCurrent
-                                  ? isRetrying
-                                    ? "REATTEMPTING"
-                                    : "EXECUTING"
-                                  : "PENDING";
-
-                              return (
-                                <div
-                                  key={stage}
-                                  className={`flex items-center justify-between rounded-md p-3 transition-colors ${
-                                    isCompleted
-                                      ? "bg-green-50 text-green-900 dark:bg-green-950/20 dark:text-green-100"
-                                      : isCurrent
-                                        ? isRetrying
-                                          ? "bg-orange-50 text-orange-900 dark:bg-orange-950/20 dark:text-orange-100"
-                                          : "bg-blue-50 text-blue-900 dark:bg-blue-950/20 dark:text-blue-100"
-                                        : "bg-muted/50 text-muted-foreground"
-                                  }`}
-                                >
-                                  <div>
-                                    <p className="font-medium text-sm">
-                                      {description}
-                                    </p>
-                                    <p className="text-xs opacity-80">
-                                      {isCompleted
-                                        ? "Completado"
-                                        : isCurrent
-                                          ? isRetrying
-                                            ? "Reintentando..."
-                                            : "En progreso"
-                                          : "Pendiente"}
-                                    </p>
-                                  </div>
-                                  <TaskStatusIcon status={taskStatus} />
-                                </div>
-                              );
-                            },
-                          )}
+                              },
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+
+              {/* Chat Sidebar */}
+              <ChatSidebar
+                isOpen={isChatOpen}
+                onToggle={() => setIsChatOpen(!isChatOpen)}
+              />
             </div>
           </main>
         </div>

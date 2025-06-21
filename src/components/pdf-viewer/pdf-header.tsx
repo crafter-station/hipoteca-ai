@@ -10,6 +10,7 @@ import {
   FileText,
   Loader2,
   Maximize,
+  MessageCircle,
   Search,
   ZoomIn,
   ZoomOut,
@@ -40,6 +41,8 @@ interface PDFHeaderProps {
   onZoomOut?: () => void;
   onToggleFullscreen?: () => void;
   onToggleSearch?: () => void;
+  onToggleChat?: () => void;
+  isChatOpen?: boolean;
 }
 
 // Status mapping for display
@@ -116,6 +119,8 @@ export function PDFHeader({
   onZoomOut,
   onToggleFullscreen,
   onToggleSearch,
+  onToggleChat,
+  isChatOpen,
 }: PDFHeaderProps) {
   const statusConfig =
     STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || DEFAULT_STATUS;
@@ -259,6 +264,18 @@ export function PDFHeader({
               <div className="hidden sm:block">
                 <HighlightLegend />
               </div>
+              {/* Chat - Always visible */}
+              {onToggleChat && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleChat}
+                  className={`h-8 w-8 flex-shrink-0 p-0 ${isChatOpen ? "bg-primary/10 text-primary" : ""}`}
+                  title="Chat de análisis"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              )}
 
               {/* Search - Always visible */}
               <Button

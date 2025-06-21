@@ -44,6 +44,7 @@ export default function PDFViewer({
   onPDFViewerReady,
   // Minimap control
   showMinimap = true,
+  isMinimapCompact = false,
   onMinimapNavigation,
 }: PDFViewerProps) {
   console.log({ highlights, pdfUrl, instanceId });
@@ -55,6 +56,11 @@ export default function PDFViewer({
     clientHeight: 0,
     scrollHeight: 0,
   });
+
+  // State for programmatic scroll control
+  const [programmaticScrollTop, setProgrammaticScrollTop] = useState<
+    number | undefined
+  >(undefined);
 
   // State for minimap page highlight data
   const [pageHighlightData, setPageHighlightData] = useState<
@@ -107,6 +113,27 @@ export default function PDFViewer({
       setPageHighlightData(data);
     },
     [],
+  );
+
+  // Handle scroll changes from PDF canvas
+  const handleScrollChange = useCallback(
+    (scrollTop: number, scrollHeight: number, clientHeight: number) => {
+      setScrollState({ scrollTop, scrollHeight, clientHeight });
+    },
+    [],
+  );
+
+  // Handle minimap navigation
+  const handleMinimapNavigation = useCallback(
+    (scrollPercentage: number) => {
+      if (scrollState.scrollHeight > scrollState.clientHeight) {
+        const targetScrollTop =
+          scrollPercentage *
+          (scrollState.scrollHeight - scrollState.clientHeight);
+        setProgrammaticScrollTop(targetScrollTop);
+      }
+    },
+    [scrollState.scrollHeight, scrollState.clientHeight],
   );
 
   // Handle keyboard shortcuts
@@ -242,88 +269,48 @@ export default function PDFViewer({
     };
   }, [instanceId, handleNavigateToResult]);
 
-  // Update scroll state for minimap and current page detection
+  // Update current page based on scroll position
   useEffect(() => {
-    const updateScrollState = () => {
-      if (containerRef.current) {
-        // Find the PDF canvas container that has the scroll
-        const pdfCanvasContainer = containerRef.current.querySelector(
-          '[class*="overflow-auto"]',
-        ) as HTMLElement;
-        if (pdfCanvasContainer) {
-          const newScrollState = {
-            scrollTop: pdfCanvasContainer.scrollTop,
-            clientHeight: pdfCanvasContainer.clientHeight,
-            scrollHeight: pdfCanvasContainer.scrollHeight,
-          };
-          setScrollState(newScrollState);
+    if (
+      pdfViewer.totalPages > 0 &&
+      scrollState.scrollHeight > scrollState.clientHeight
+    ) {
+      // Only calculate if there's actual scrollable content
+      // Estimate page height (total height / number of pages)
+      const estimatedPageHeight =
+        scrollState.scrollHeight / pdfViewer.totalPages;
+      // Calculate which page is currently at the top of the viewport (more intuitive)
+      const calculatedPage = Math.max(
+        1,
+        Math.min(
+          pdfViewer.totalPages,
+          Math.floor(scrollState.scrollTop / estimatedPageHeight) + 1,
+        ),
+      );
 
-          // Calculate current page based on scroll position
-          if (
-            pdfViewer.totalPages > 0 &&
-            newScrollState.scrollHeight > newScrollState.clientHeight
-          ) {
-            // Only calculate if there's actual scrollable content
-            // Estimate page height (total height / number of pages)
-            const estimatedPageHeight =
-              newScrollState.scrollHeight / pdfViewer.totalPages;
-            // Calculate which page is currently at the top of the viewport (more intuitive)
-            const calculatedPage = Math.max(
-              1,
-              Math.min(
-                pdfViewer.totalPages,
-                Math.floor(newScrollState.scrollTop / estimatedPageHeight) + 1,
-              ),
-            );
+      console.log(
+        `📄 SCROLL DETECTION: scrollTop=${scrollState.scrollTop}, pageHeight=${estimatedPageHeight.toFixed(1)}, calculatedPage=${calculatedPage}`,
+      );
 
-            console.log(
-              `📄 SCROLL DETECTION: scrollTop=${newScrollState.scrollTop}, pageHeight=${estimatedPageHeight.toFixed(1)}, calculatedPage=${calculatedPage}`,
-            );
-
-            // Only update if the page actually changed to avoid unnecessary re-renders
-            if (calculatedPage !== pdfViewer.currentPage) {
-              console.log(
-                `📄 PAGE CHANGED: From ${pdfViewer.currentPage} to ${calculatedPage} (scroll: ${newScrollState.scrollTop})`,
-              );
-              pdfViewer.updateCurrentPage(calculatedPage);
-            }
-          } else if (
-            newScrollState.scrollHeight <= newScrollState.clientHeight &&
-            pdfViewer.currentPage !== 1
-          ) {
-            // If there's no scroll, we should be on page 1
-            console.log("📄 NO SCROLL: Resetting to page 1");
-            pdfViewer.updateCurrentPage(1);
-          }
-        }
+      // Only update if the page actually changed to avoid unnecessary re-renders
+      if (calculatedPage !== pdfViewer.currentPage) {
+        console.log(
+          `📄 PAGE CHANGED: From ${pdfViewer.currentPage} to ${calculatedPage} (scroll: ${scrollState.scrollTop})`,
+        );
+        pdfViewer.updateCurrentPage(calculatedPage);
       }
-    };
-
-    // Set up scroll listener
-    const setupScrollListener = () => {
-      const pdfCanvasContainer = containerRef.current?.querySelector(
-        '[class*="overflow-auto"]',
-      ) as HTMLElement;
-      if (pdfCanvasContainer) {
-        pdfCanvasContainer.addEventListener("scroll", updateScrollState, {
-          passive: true,
-        });
-        // Initial update
-        updateScrollState();
-
-        return () => {
-          pdfCanvasContainer.removeEventListener("scroll", updateScrollState);
-        };
-      }
-    };
-
-    // Wait for PDF to load and elements to be ready
-    if (pdfViewer.pdf && containerRef.current) {
-      const cleanup = setupScrollListener();
-      return cleanup;
+    } else if (
+      scrollState.scrollHeight <= scrollState.clientHeight &&
+      pdfViewer.currentPage !== 1
+    ) {
+      // If there's no scroll, we should be on page 1
+      console.log("📄 NO SCROLL: Resetting to page 1");
+      pdfViewer.updateCurrentPage(1);
     }
   }, [
-    pdfViewer.pdf,
+    scrollState.scrollTop,
+    scrollState.scrollHeight,
+    scrollState.clientHeight,
     pdfViewer.totalPages,
     pdfViewer.currentPage,
     pdfViewer.updateCurrentPage,
@@ -391,6 +378,8 @@ export default function PDFViewer({
           highlights={highlights}
           onNavigateToResult={handleNavigateToResult}
           onPageHighlightData={handlePageHighlightData}
+          scrollTop={programmaticScrollTop}
+          onScrollChange={handleScrollChange}
         />
       </div>
 
@@ -404,26 +393,10 @@ export default function PDFViewer({
           viewerClientHeight={scrollState.clientHeight}
           viewerScrollHeight={scrollState.scrollHeight}
           pageHighlightData={pageHighlightData}
-          onNavigation={(scrollPercentage) => {
-            if (onMinimapNavigation) {
-              onMinimapNavigation(scrollPercentage);
-            } else if (containerRef.current) {
-              // Find the scrollable PDF canvas container
-              const pdfCanvasContainer = containerRef.current.querySelector(
-                '[class*="overflow-auto"]',
-              ) as HTMLElement;
-              if (pdfCanvasContainer && scrollState.scrollHeight > 0) {
-                const targetScrollTop =
-                  scrollPercentage *
-                  (scrollState.scrollHeight - scrollState.clientHeight);
-                pdfCanvasContainer.scrollTo({
-                  top: targetScrollTop,
-                  behavior: "smooth",
-                });
-              }
-            }
-          }}
-          className="w-32 flex-shrink-0"
+          instanceId={instanceId}
+          isCompact={isMinimapCompact}
+          onNavigation={onMinimapNavigation || handleMinimapNavigation}
+          className="flex-shrink-0"
         />
       )}
     </div>

@@ -264,3 +264,15 @@
   opacity: 0.9;
   transform: scale(1.02);
 }
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  /* Firefox */
+  scrollbar-width: none;
+  /* Safari and Chrome */
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
