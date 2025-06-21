@@ -1,22 +1,18 @@
 "use server";
 
+import { getUserId } from "@/lib/auth/server";
 import { processPDFTask } from "@/triggers/process-pdf";
-import { auth } from "@clerk/nextjs/server";
 import { tasks } from "@trigger.dev/sdk/v3";
 
 export async function processPDF(fileUrl: string, fileName: string) {
-  const session = await auth();
-
-  if (!session.userId) {
-    return { error: "Unauthorized" };
-  }
+  const userId = await getUserId();
 
   try {
     const handle = await tasks.trigger<typeof processPDFTask>(
       processPDFTask.id,
       {
         fileUrl: fileUrl,
-        userId: session.userId,
+        userId,
         fileName: fileName,
       },
     );

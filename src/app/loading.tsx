@@ -44,24 +44,24 @@ export default function Loading() {
             <span className="font-semibold text-sm">HipotecaFindr</span>
           </div>
 
-          {/* Nuevo Análisis Button Placeholder */}
+          {/* Nuevo Contrato Button Placeholder */}
           <div className="h-8 w-full animate-pulse rounded-md border bg-muted/30" />
 
           {/* Search Button Placeholder */}
           <div className="flex h-9 w-full items-center gap-2 rounded-md bg-muted/20 px-3 py-2">
             <Search className="h-4 w-4 text-muted-foreground/50" />
             <span className="text-muted-foreground/50 text-sm">
-              Buscar análisis
+              Buscar Contrato
             </span>
           </div>
         </div>
 
-        {/* Historial Section */}
+        {/* Contracts Section */}
         <div className="flex-1">
           <div className="mt-4 p-2">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-muted-foreground text-xs">
-                Historial de Análisis
+                Contratos
               </h3>
               <div className="h-3 w-6 animate-pulse rounded bg-muted/50" />
             </div>

@@ -9,7 +9,7 @@ import {
   streamText,
 } from "ai";
 
-import { generateUserId } from "@/lib/user-identification";
+import { getUserId } from "@/lib/auth/server";
 import { MORTGAGE_KNOWLEDGE_DOCUMENT_ID } from "@/models/constants";
 import { getContractIdByKey } from "@/models/contract";
 import { CHAT_SYSTEM_PROMPT } from "@/prompts/chat-system-prompt";
@@ -29,8 +29,8 @@ interface ChatRequest {
   contract_id: string;
 }
 
-export async function GET(req: Request) {
-  const userId = generateUserId(getUserHeaders(req));
+export async function GET() {
+  const userId = await getUserId();
 
   const chats = await listUserChats(userId);
 
@@ -57,8 +57,7 @@ async function getChatTitle(messages: Message[]) {
 
 export async function POST(req: Request) {
   try {
-    // Generate user ID from request headers
-    const userId = generateUserId(getUserHeaders(req));
+    const userId = await getUserId();
 
     const body = (await req.json()) as ChatRequest;
     const { message: rawMessage, chat_id, contract_id: key } = body;

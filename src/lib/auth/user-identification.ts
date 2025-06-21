@@ -7,7 +7,7 @@ if (!SECRET_KEY) {
   throw new Error("USER_ID_SECRET_KEY environment variable is required");
 }
 
-interface RequestHeaders {
+export interface RequestHeaders {
   "x-forwarded-for"?: string;
   "user-agent"?: string;
   "accept-language"?: string;

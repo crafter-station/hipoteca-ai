@@ -16,7 +16,7 @@ export function UploadEmptyState() {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { user, isLoaded } = useUser();
+  const { user } = useUser();
 
   const handleFileSelect = (file: File) => {
     if (!file || file.type !== "application/pdf") {
@@ -28,14 +28,7 @@ export function UploadEmptyState() {
   const handleAnalyze = async () => {
     if (!selectedFile) return;
 
-    // Verify user is authenticated
-    if (!user) {
-      console.error("User not authenticated");
-      alert("Debes iniciar sesión para analizar documentos");
-      return;
-    }
-
-    console.log("Starting PDF analysis for user:", user.id);
+    console.log("Starting PDF analysis");
     setIsAnalyzing(true);
     try {
       const [{ ufsUrl, name, key }] = await uploadFiles("documentUploader", {
@@ -221,8 +214,7 @@ export function UploadEmptyState() {
             Analiza tu Hipoteca
           </h2>
           <p className="mx-auto max-w-sm text-muted-foreground text-sm">
-            Sube tu contrato de hipoteca en PDF y obtén un análisis detallado
-            con IA
+            Sube tu contrato de hipoteca y obtén un análisis detallado con IA
           </p>
         </div>
 
@@ -247,10 +239,10 @@ export function UploadEmptyState() {
             </div>
             <div>
               <p className="font-medium text-foreground text-sm">
-                Arrastra tu PDF aquí
+                Arrastra tu contrato de hipoteca aquí
               </p>
               <p className="text-muted-foreground text-xs">
-                O haz clic para seleccionar un archivo
+                O haz clic para seleccionarlo
               </p>
             </div>
           </div>
@@ -273,7 +265,7 @@ export function UploadEmptyState() {
             className="h-9 flex-1 rounded-lg border-none bg-muted/50 px-3 text-foreground text-sm shadow-sm hover:bg-muted focus:bg-muted focus-visible:bg-muted"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Seleccionar PDF
+            Seleccionar Archivo
           </Button>
 
           <Button
@@ -301,9 +293,11 @@ export function UploadEmptyState() {
           {user && (
             <p className="mt-2 text-muted-foreground/60 text-xs">
               Conectado como:{" "}
-              {user.firstName ||
-                user.username ||
-                user.emailAddresses[0]?.emailAddress}
+              {user
+                ? user.firstName ||
+                  user.username ||
+                  user.emailAddresses[0]?.emailAddress
+                : "Anónimo"}
             </p>
           )}
         </div>

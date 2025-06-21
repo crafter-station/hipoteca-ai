@@ -46,7 +46,6 @@ export function AppSidebarClient({
   contracts: initialContracts,
 }: AppSidebarClientProps) {
   const [open, setOpen] = useState(false);
-  const [contractsLoaded] = useState(true);
   const { user, isLoaded } = useUser();
 
   // Transform contracts directly - no state, no effects, no loops
@@ -106,7 +105,7 @@ export function AppSidebarClient({
 
           {/* Nueva Hipoteca - Styled like v0 */}
           <Button size="sm" variant="outline" asChild>
-            <Link href="/checkr/new">Nuevo Análisis</Link>
+            <Link href="/checkr/new">Nuevo Contrato</Link>
           </Button>
 
           {/* Search - Styled like v0 with hover effects */}
@@ -114,12 +113,10 @@ export function AppSidebarClient({
             variant="ghost"
             onClick={() => setOpen(true)}
             className="group/search text-muted-foreground hover:bg-[#EDEDED] hover:text-foreground"
-            disabled={
-              !isLoaded || !user || !contractsLoaded || contracts.length === 0
-            }
+            disabled={!isLoaded || !user || contracts.length === 0}
           >
             <Search className="h-4 w-4" />
-            <span>Buscar análisis</span>
+            <span>Buscar Contrato</span>
             <kbd className="ml-auto hidden items-center gap-1 opacity-0 transition-opacity group-hover/search:opacity-100 sm:flex">
               <kbd className="pointer-events-none flex h-4 w-4 select-none items-center justify-center rounded-sm bg-muted px-0 font-normal text-muted-foreground text-xs tabular-nums tracking-tight">
                 ⌘
@@ -135,13 +132,13 @@ export function AppSidebarClient({
           {/* User Contracts - Scrolleable */}
           <SidebarGroup className="min-h-0 flex-1">
             <SidebarGroupLabel>
-              Historial de Análisis
-              {isLoaded && user && contractsLoaded && (
+              Contratos
+              {isLoaded && user && (
                 <span className="ml-2 text-muted-foreground text-xs">
                   ({contracts.length})
                 </span>
               )}
-              {(!isLoaded || (user && !contractsLoaded)) && (
+              {(!isLoaded || user) && (
                 <span className="ml-2 animate-pulse text-muted-foreground text-xs">
                   (...)
                 </span>
@@ -150,7 +147,7 @@ export function AppSidebarClient({
             <SidebarGroupContent>
               <ScrollArea className="h-full w-full">
                 <SidebarMenu className="gap-1">
-                  {!isLoaded || (user && !contractsLoaded) ? (
+                  {!isLoaded ? (
                     // Show skeletons while loading user data OR while loading contracts for authenticated user
                     <>
                       <SidebarMenuItem className="w-full">
@@ -187,11 +184,6 @@ export function AppSidebarClient({
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     </>
-                  ) : !user ? (
-                    // Show not logged in only after we're sure user is not authenticated
-                    <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
-                      Inicia sesión para ver tu historial
-                    </div>
                   ) : contracts.length === 0 ? (
                     // Show empty state ONLY when user is loaded AND contracts are loaded AND array is empty
                     <div className="flex flex-col items-center justify-center py-8 text-center">

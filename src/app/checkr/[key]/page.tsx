@@ -1,6 +1,6 @@
 import { getUserContracts } from "@/actions/get-user-contracts";
+import { getUserId } from "@/lib/auth/server";
 import type { Contract } from "@/models/contract";
-import { auth } from "@clerk/nextjs/server";
 import { Suspense } from "react";
 import { CheckrAnalysisClient } from "./checkr-analysis-client";
 
@@ -15,17 +15,15 @@ export default async function CheckrAnalysisPage({
 }: CheckrAnalysisPageProps) {
   const { key } = await params;
   const { runId, token } = await searchParams;
-  const session = await auth();
+  const userId = await getUserId();
 
   // Fetch user contracts on the server
   let contracts: Contract[] = [];
-  if (session.userId) {
-    try {
-      contracts = await getUserContracts(session.userId);
-    } catch (error) {
-      console.error("Error fetching user contracts:", error);
-      contracts = [];
-    }
+  try {
+    contracts = await getUserContracts(userId);
+  } catch (error) {
+    console.error("Error fetching user contracts:", error);
+    contracts = [];
   }
 
   return (

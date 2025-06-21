@@ -105,7 +105,8 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
                   ¡Hola! Soy tu asistente de análisis hipotecario.
                 </p>
                 <p className="mt-1 text-muted-foreground text-xs">
-                  Pregúntame sobre tu contrato y te ayudo a entenderlo.
+                  Pregúntame sobre tu contrato de hipoteca y te ayudo a
+                  entenderlo.
                 </p>
               </div>
             )}
