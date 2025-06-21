@@ -1,4 +1,7 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import type { Source } from "@/lib/chat-utils";
+import { Building2, ExternalLink, FileText } from "lucide-react";
 
 interface SourcesProps {
   sources: Source[];
@@ -13,47 +16,112 @@ export function Sources({ sources }: SourcesProps) {
     "https://o6dbw19iyd.ufs.sh/f/dgFwWFXCXZVhT5Loy8B7YUFvSi8RlzkwVJnbZ6ypt93rXGOs";
 
   return (
-    <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs dark:border-gray-700 dark:bg-gray-800">
-      <div className="mb-2 font-semibold text-gray-700 uppercase tracking-wider dark:text-gray-300">
-        Referencias
+    <div className="mt-4">
+      <div className="mb-3 flex items-center gap-2">
+        <div className="h-px flex-1 bg-border/50" />
+        <span className="font-medium text-muted-foreground/70 text-xs uppercase tracking-wider">
+          Referencias
+        </span>
+        <div className="h-px flex-1 bg-border/50" />
       </div>
-      <div className="space-y-1">
-        {sources.map((source) => {
+
+      <div className="space-y-2">
+        {sources.map((source, index) => {
           let link: string | null = null;
-          if (source.name === "Mortgage Knowledge" && source.pages.length > 0) {
-            link = `${mortgagePdf}#page=${source.pages[0]}`;
-          } else if (source.name === "Contract Context") {
-            link = `${contractDoc}#page=${source.pages[0]}`;
+          let documentName: string;
+          let documentIcon: React.ReactNode;
+
+          if (source.name === "Mortgage Knowledge") {
+            link =
+              source.pages.length > 0
+                ? `${mortgagePdf}#page=${source.pages[0]}`
+                : null;
+            documentName = "Guía Hipotecaria BdE";
+            documentIcon = (
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground/60" />
+            );
+          } else {
+            link =
+              source.pages.length > 0
+                ? `${contractDoc}#page=${source.pages[0]}`
+                : null;
+            documentName = "Tu Contrato";
+            documentIcon = (
+              <FileText className="h-3.5 w-3.5 text-muted-foreground/60" />
+            );
           }
+
           return (
             <div
               key={`${source.name}-${source.pages.join("-")}`}
-              className="flex items-baseline gap-2"
+              className="rounded-md border border-border/30 bg-muted/20 p-2.5 transition-colors hover:bg-muted/40"
             >
-              <span className="inline-block min-w-[1.5em] text-center font-bold text-blue-600 dark:text-blue-400">
-                {sources.indexOf(source) + 1}.
-              </span>
-              <span className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
-                {source.name === "Mortgage Knowledge"
-                  ? "Guía Hipotecaria del Banco de España"
-                  : "Tu contrato hipotecario"}
-                {link && (
-                  <a
-                    href={link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-1 text-blue-600 hover:underline dark:text-blue-400"
-                    title="Abrir documento de referencia"
-                  >
-                    <span style={{ fontSize: "1em", verticalAlign: "middle" }}>
-                      🔗
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-2">
+                  <div className="flex flex-shrink-0 items-center gap-1.5">
+                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-muted/50 font-medium text-muted-foreground/80 text-xs">
+                      {index + 1}
                     </span>
-                  </a>
+                    {documentIcon}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-center gap-2">
+                      <span className="truncate font-medium text-muted-foreground text-xs">
+                        {documentName}
+                      </span>
+                      {source.pages.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {source.pages.slice(0, 3).map((page) => (
+                            <Badge
+                              key={page}
+                              variant="outline"
+                              className="h-auto border-border/50 px-1 py-0 text-muted-foreground/70 text-xs"
+                            >
+                              p.{page}
+                            </Badge>
+                          ))}
+                          {source.pages.length > 3 && (
+                            <Badge
+                              variant="outline"
+                              className="h-auto border-border/30 px-1 py-0 text-muted-foreground/50 text-xs"
+                            >
+                              +{source.pages.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {source.pages.length > 0 && (
+                      <p className="text-muted-foreground/60 text-xs">
+                        {source.pages.length === 1
+                          ? "1 página referenciada"
+                          : `${source.pages.length} páginas referenciadas`}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {link && (
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 flex-shrink-0 p-0 hover:bg-muted/60 hover:text-muted-foreground"
+                  >
+                    <a
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={`Abrir ${documentName} en nueva pestaña`}
+                      className="flex items-center justify-center"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </Button>
                 )}
-              </span>
-              <span className="ml-2 text-gray-500 dark:text-gray-400">
-                Páginas: {source.pages.join(", ")}
-              </span>
+              </div>
             </div>
           );
         })}

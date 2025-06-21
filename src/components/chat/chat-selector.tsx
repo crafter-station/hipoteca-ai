@@ -12,9 +12,11 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, MessageCircle } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
+import { useState } from "react";
 
 export function ChatSelector() {
   const [chatId, setChatId] = useQueryState("chatId", parseAsString);
+  const [open, setOpen] = useState(false);
 
   const { data: chats, isLoading } = useQuery({
     queryKey: ["chats"],
@@ -32,10 +34,11 @@ export function ChatSelector() {
 
   const handleChatSelect = (selectedChatId: string) => {
     setChatId(selectedChatId);
+    setOpen(false); // Close popover after selection
   };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"

@@ -1,17 +1,15 @@
 "use client";
 
+import { ChatToolbar } from "@/components/chat/chat-toolbar";
 import { Sources } from "@/components/chat/sources";
-import { useChatId } from "@/components/chat/use-chat-id";
+import { useChatLogic } from "@/components/chat/use-chat-logic";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 import { parseSources } from "@/lib/chat-utils";
 import { cn } from "@/lib/utils";
-import { useChat } from "@ai-sdk/react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type Message, createIdGenerator } from "ai";
-import { MessageCircle, Send, X } from "lucide-react";
-import { useParams } from "next/navigation";
+import { MessageCircle, Send } from "lucide-react";
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -19,74 +17,24 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
-  const queryClient = useQueryClient();
-  const [chatId] = useChatId();
-  const { key } = useParams<{ key: string | undefined }>();
-
-  const { data: initialMessages } = useQuery({
-    queryKey: ["chat", chatId],
-    queryFn: async () => {
-      const res = await fetch(`/api/chat/${chatId}`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch chat");
-      }
-      return res.json() as Promise<Message[]>;
-    },
-  });
-
-  const { input, handleInputChange, handleSubmit, messages, status } = useChat({
-    id: chatId ?? undefined,
-    sendExtraMessageFields: true,
-    initialMessages: initialMessages ?? [],
-    experimental_prepareRequestBody({ messages, id }) {
-      return {
-        message: messages[messages.length - 1],
-        chat_id: id,
-        contract_id: key,
-      };
-    },
-    generateId: createIdGenerator({
-      size: 16,
-    }),
-    onFinish: () => {
-      queryClient.invalidateQueries({ queryKey: ["chats"] });
-    },
-  });
-
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (input.trim()) {
-      handleSubmit(e);
-    }
-  };
+  const { input, handleInputChange, handleFormSubmit, messages, status } =
+    useChatLogic();
 
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className="slide-in-from-right w-80 flex-shrink-0 animate-in border-border border-l bg-card duration-300">
-      {/* Chat Header */}
-      <div className="flex items-center justify-between border-border border-b p-3">
-        <div className="flex items-center gap-2">
-          <MessageCircle className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-sm">Chat de Análisis</h3>
+    <div className="slide-in-from-right w-96 flex-shrink-0 animate-in duration-300">
+      <div className="max-[100dvh] h-full rounded-lg border border-border bg-card">
+        {/* Header */}
+        <div>
+          <ChatToolbar onClose={onToggle} />
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onToggle}
-          className="h-8 w-8 p-0"
-        >
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
 
-      {/* Chat Content */}
-      <div className="flex h-full flex-col">
-        {/* Messages Area */}
-        <ScrollArea className="flex-1 p-3">
-          <div className="space-y-4">
+        {/* Messages */}
+        <ScrollArea className="h-[calc(100dvh-250px)] px-4">
+          <div className="space-y-4 py-4">
             {messages
               .toSorted(
                 (a, b) =>
@@ -97,10 +45,10 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
                 <div
                   key={m.id}
                   className={cn(
-                    "max-w-full rounded-lg p-3 text-sm",
+                    "max-w-full",
                     m.role === "user"
-                      ? "ml-4 bg-primary/10 text-foreground"
-                      : "mr-4 bg-muted text-foreground",
+                      ? "ml-8 rounded-lg rounded-br-none bg-primary/5 p-3 text-primary-foreground dark:text-primary-foreground"
+                      : "mr-0 p-2",
                   )}
                 >
                   {m.parts
@@ -108,7 +56,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
                     .map(({ toolInvocation }, index) => (
                       <p
                         key={toolInvocation.toolCallId}
-                        className="mb-2 text-primary text-xs"
+                        className="mb-2 text-muted-foreground text-xs italic"
                       >
                         {toolInvocation.toolName === "searchContractContext" ? (
                           <>
@@ -133,7 +81,14 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
                     const { text, sources } = parseSources(m.content);
                     return (
                       <>
-                        <p className="whitespace-pre-wrap break-words">
+                        <p
+                          className={cn(
+                            "whitespace-pre-wrap break-words text-sm",
+                            m.role === "user"
+                              ? "text-foreground dark:text-foreground"
+                              : "text-foreground",
+                          )}
+                        >
                           {text}
                         </p>
                         <Sources sources={sources} />
@@ -157,28 +112,35 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
           </div>
         </ScrollArea>
 
-        {/* Input Area */}
-        <div className="border-border border-t p-3">
-          <form onSubmit={handleFormSubmit} className="space-y-2">
-            <div className="flex gap-2">
-              <Input
+        {/* Input */}
+        <div className="rounded-b-lg border-t bg-card p-4">
+          <form onSubmit={handleFormSubmit}>
+            <div className="relative">
+              <Textarea
                 value={input}
                 onChange={handleInputChange}
-                placeholder="Pregunta sobre tu contrato..."
-                className="flex-1 text-sm"
+                placeholder="¿Qué significa el TIN? ¿Cuál es mi TAE? Pregunta sobre tu hipoteca..."
+                className="h-[75px] w-full flex-1 resize-none pr-12"
                 disabled={status === "streaming"}
+                rows={1}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleFormSubmit(e);
+                  }
+                }}
               />
               <Button
                 type="submit"
                 size="sm"
                 disabled={status === "streaming" || !input.trim()}
-                className="h-9 w-9 p-0"
+                className="absolute right-2 bottom-2 h-8 w-8 rounded-full p-0"
               >
                 <Send className="h-4 w-4" />
               </Button>
             </div>
             {status === "streaming" && (
-              <p className="text-muted-foreground text-xs">
+              <p className="mt-2 text-muted-foreground text-xs">
                 El asistente está escribiendo...
               </p>
             )}
