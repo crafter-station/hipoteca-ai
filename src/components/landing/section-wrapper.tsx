@@ -6,6 +6,7 @@ interface SectionWrapperProps {
   children: React.ReactNode;
   className?: string;
   hasPadding?: boolean;
+  customHeight?: boolean;
 }
 
 export function SectionWrapper({
@@ -13,12 +14,15 @@ export function SectionWrapper({
   children,
   className,
   hasPadding = true,
+  customHeight = false,
 }: SectionWrapperProps) {
   return (
     <section
       id={id}
       className={cn(
-        "full-section relative flex min-h-[100dvh] w-full flex-col items-center justify-center overflow-hidden",
+        "full-section relative flex w-full flex-col items-center overflow-hidden",
+        !customHeight && "min-h-[100dvh] justify-center",
+        customHeight && "min-h-screen",
         hasPadding && "px-4 py-16 md:px-8 md:py-24",
         className,
       )}

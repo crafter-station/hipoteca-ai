@@ -11,11 +11,8 @@ import { Logo } from "./logo";
 export function Header() {
   const navLinks = [
     { href: "#hero", label: "Inicio" },
-    { href: "#problem", label: "El Reto" },
+    { href: "#problem", label: "Problema" },
     { href: "#solution", label: "Solución" },
-    { href: "#features", label: "Capacidades" },
-    { href: "#pricing", label: "Planes" },
-    { href: "#faq", label: "FAQ" },
   ];
 
   return (
@@ -26,7 +23,9 @@ export function Header() {
           className="mr-1 inline-flex shrink-0 cursor-pointer select-none items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border-none bg-transparent px-4 font-medium text-sm outline-none transition-all hover:bg-transparent focus:bg-transparent focus-visible:bg-transparent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 has-[>svg]:p-0 [&>svg]:size-12"
         >
           <Logo className="size-14" />
-          <span className="font-bold text-foreground text-sm">HipotecaAI</span>
+          <span className="font-bold text-foreground text-sm">
+            HipotecaFindr
+          </span>
         </SmoothScrollLink>
       </div>
 
@@ -45,19 +44,9 @@ export function Header() {
 
       <div className="flex flex-1 items-center justify-end gap-2">
         <SignedOut>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              asChild
-              className="h-7 rounded-md px-3 text-sm"
-            >
-              <Link href="/sign-in">Sign In</Link>
-            </Button>
-            <Button size="sm" asChild className="h-7 rounded-md px-3 text-sm">
-              <Link href="/sign-up">Sign Up</Link>
-            </Button>
-          </div>
+          <Button size="sm" asChild className="h-7 rounded-md px-3 text-sm">
+            <Link href="/checkr/new">Comenzar</Link>
+          </Button>
         </SignedOut>
         <ThemeSwitcher />
         <UserButton />
