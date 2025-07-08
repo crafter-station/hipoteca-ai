@@ -1,0 +1,292 @@
+:root {
+  /* Pure Grayscale Neutral Colors - Light Mode */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+  --color-neutral-950: #0a0a0a;
+
+  /* Professional Primary Colors - Light Mode (Black system) */
+  --color-primary-base: var(--color-neutral-950);
+  --color-primary-foreground: var(--color-neutral-50);
+  --color-primary-inactive: var(--color-neutral-700);
+  --color-primary-subtle: var(--color-neutral-100);
+  --color-primary-darker: var(--color-neutral-900);
+  --color-primary-dark: var(--color-neutral-950);
+
+  /* Secondary Colors - Light Mode (White system) */
+  --color-secondary-base: var(--color-neutral-50);
+  --color-secondary-foreground: var(--color-neutral-950);
+  --color-secondary-inactive: var(--color-neutral-100);
+  --color-secondary-subtle: var(--color-neutral-50);
+  --color-secondary-darker: var(--color-neutral-200);
+  --color-secondary-dark: var(--color-neutral-300);
+
+  /* UI Background Colors - Light Mode */
+  --color-ui-base: #ffffff;
+  --color-ui-subtle: var(--color-neutral-50);
+  --color-ui-soft: var(--color-neutral-100);
+  --color-ui-inactive: var(--color-neutral-200);
+  --color-ui-strong: var(--color-neutral-300);
+
+  /* Border Colors - Light Mode */
+  --color-border-base: var(--color-neutral-200);
+  --color-border-subtle: var(--color-neutral-100);
+  --color-border-soft: var(--color-neutral-50);
+  --color-border-inactive: var(--color-neutral-300);
+  --color-border-strong: var(--color-neutral-400);
+
+  /* Text Colors - Light Mode */
+  --color-text-base: var(--color-neutral-900);
+  --color-text-subtle: var(--color-neutral-700);
+  --color-text-soft: var(--color-neutral-600);
+  --color-text-inactive: var(--color-neutral-500);
+  --color-text-strong: var(--color-neutral-950);
+
+  /* Financial Status Colors - Light Mode */
+  --color-success-base: #059669;
+  --color-success-foreground: #ffffff;
+  --color-success-subtle: #d1fae5;
+  --color-success-soft: #a7f3d0;
+  --color-success-strong: #047857;
+
+  --color-error-base: #dc2626;
+  --color-error-foreground: #ffffff;
+  --color-error-subtle: #fee2e2;
+  --color-error-soft: #fecaca;
+  --color-error-strong: #b91c1c;
+
+  --color-info-base: #0284c7;
+  --color-info-foreground: #ffffff;
+  --color-info-subtle: #e0f2fe;
+  --color-info-soft: #bae6fd;
+  --color-info-strong: #0369a1;
+
+  --color-warning-base: #d97706;
+  --color-warning-foreground: #ffffff;
+  --color-warning-subtle: #fef3c7;
+  --color-warning-soft: #fde68a;
+  --color-warning-strong: #b45309;
+
+  /* Legacy mappings for backward compatibility */
+  --background: #ffffff;
+  --foreground: var(--color-text-base);
+  --card: #ffffff;
+  --card-foreground: var(--color-text-base);
+  --popover: #ffffff;
+  --popover-foreground: var(--color-text-base);
+  --primary: var(--color-primary-base);
+  --primary-foreground: var(--color-primary-foreground);
+  --secondary: var(--color-neutral-100);
+  --secondary-foreground: var(--color-text-subtle);
+  --muted: var(--color-neutral-200);
+  --muted-foreground: var(--color-text-soft);
+  --accent: var(--color-primary-subtle);
+  --accent-foreground: var(--color-primary-dark);
+  --destructive: var(--color-error-base);
+  --destructive-foreground: var(--color-error-foreground);
+  --border: var(--color-border-base);
+  --input: var(--color-ui-soft);
+  --ring: var(--color-primary-base);
+
+  /* Financial chart colors */
+  --chart-1: var(--color-primary-base);
+  --chart-2: var(--color-success-base);
+  --chart-3: var(--color-warning-base);
+  --chart-4: var(--color-error-base);
+  --chart-5: #7c3aed;
+
+  /* Professional sidebar colors */
+  --sidebar: var(--color-ui-soft);
+  --sidebar-foreground: var(--color-text-base);
+  --sidebar-primary: var(--color-primary-base);
+  --sidebar-primary-foreground: var(--color-primary-foreground);
+  --sidebar-accent: var(--color-ui-inactive);
+  --sidebar-accent-foreground: var(--color-text-subtle);
+  --sidebar-border: var(--color-border-base);
+  --sidebar-ring: var(--color-primary-base);
+
+  /* Professional Typography */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Merriweather", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --letter-spacing: -0.015em;
+
+  /* Spacing and borders */
+  --radius: 0.5rem;
+  --spacing: 0.25rem;
+
+  /* Professional shadows */
+  --shadow-2xs: 0 1px 2px 0 rgb(23 23 23 / 0.05);
+  --shadow-xs: 0 1px 3px 0 rgb(23 23 23 / 0.1), 0 1px 2px -1px
+    rgb(23 23 23 / 0.1);
+  --shadow-sm: 0 1px 3px 0 rgb(23 23 23 / 0.1), 0 1px 2px -1px
+    rgb(23 23 23 / 0.1);
+  --shadow: 0 1px 3px 0 rgb(23 23 23 / 0.1), 0 1px 2px -1px rgb(23 23 23 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(23 23 23 / 0.1), 0 2px 4px -2px
+    rgb(23 23 23 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(23 23 23 / 0.1), 0 4px 6px -4px
+    rgb(23 23 23 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(23 23 23 / 0.1), 0 8px 10px -6px
+    rgb(23 23 23 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(23 23 23 / 0.25);
+
+  /* Shiki Code Highlighting Variables - Light Mode */
+  --shiki-foreground: var(--color-text-base);
+  --shiki-background: var(--color-ui-subtle);
+  --shiki-token-constant: var(--color-error-base);
+  --shiki-token-string: var(--color-success-base);
+  --shiki-token-comment: var(--color-text-inactive);
+  --shiki-token-keyword: var(--color-secondary-base);
+  --shiki-token-parameter: var(--color-warning-base);
+  --shiki-token-function: var(--color-primary-base);
+  --shiki-token-string-expression: var(--color-info-base);
+  --shiki-token-punctuation: var(--color-text-soft);
+  --shiki-token-link: var(--color-info-base);
+}
+
+.dark {
+  --color-primary-base: var(--color-neutral-50);
+  --color-primary-foreground: var(--color-neutral-950);
+  --color-primary-inactive: var(--color-neutral-100);
+  --color-primary-subtle: var(--color-neutral-700);
+  --color-primary-darker: var(--color-neutral-50);
+  --color-primary-dark: var(--color-neutral-50);
+
+  /* Secondary Colors - Dark Mode (Dark gray system) */
+  --color-secondary-base: var(--color-neutral-800);
+  --color-secondary-foreground: var(--color-neutral-50);
+  --color-secondary-inactive: var(--color-neutral-900);
+  --color-secondary-subtle: var(--color-neutral-950);
+  --color-secondary-darker: var(--color-neutral-700);
+  --color-secondary-dark: var(--color-neutral-600);
+
+  /* UI Background Colors - Dark Mode */
+  --color-ui-base: var(--color-neutral-950);
+  --color-ui-subtle: var(--color-neutral-900);
+  --color-ui-soft: var(--color-neutral-800);
+  --color-ui-inactive: var(--color-neutral-700);
+  --color-ui-strong: var(--color-neutral-600);
+
+  /* Border Colors - Dark Mode */
+  --color-border-base: var(--color-neutral-700);
+  --color-border-subtle: var(--color-neutral-800);
+  --color-border-soft: var(--color-neutral-900);
+  --color-border-inactive: var(--color-neutral-600);
+  --color-border-strong: var(--color-neutral-500);
+
+  /* Text Colors - Dark Mode */
+  --color-text-base: var(--color-neutral-50);
+  --color-text-subtle: var(--color-neutral-200);
+  --color-text-soft: var(--color-neutral-300);
+  --color-text-inactive: var(--color-neutral-400);
+  --color-text-strong: #ffffff;
+
+  /* Financial Status Colors - Dark Mode (professional and muted) */
+  --color-success-base: #22d3ee;
+  --color-success-foreground: var(--color-neutral-950);
+  --color-success-subtle: #122826;
+  --color-success-soft: #115e59;
+  --color-success-strong: #67e8f9;
+
+  --color-error-base: #f87171;
+  --color-error-foreground: var(--color-neutral-950);
+  --color-error-subtle: #351414;
+  --color-error-soft: #991b1b;
+  --color-error-strong: #fca5a5;
+
+  --color-info-base: #38bdf8;
+  --color-info-foreground: var(--color-neutral-950);
+  --color-info-subtle: #172e3b;
+  --color-info-soft: #075985;
+  --color-info-strong: #7dd3fc;
+
+  --color-warning-base: #fbbf24;
+  --color-warning-foreground: var(--color-neutral-950);
+  --color-warning-subtle: #3b2517;
+  --color-warning-soft: #b45309;
+  --color-warning-strong: #fcd34d;
+
+  /* Dark Mode Legacy Mappings */
+  --background: var(--color-ui-base);
+  --foreground: var(--color-text-base);
+  --card: var(--color-ui-subtle);
+  --card-foreground: var(--color-text-base);
+  --popover: var(--color-ui-subtle);
+  --popover-foreground: var(--color-text-base);
+  --primary: var(--color-primary-base);
+  --primary-foreground: var(--color-primary-foreground);
+  --secondary: var(--color-ui-soft);
+  --secondary-foreground: var(--color-text-subtle);
+  --muted: var(--color-ui-inactive);
+  --muted-foreground: var(--color-text-soft);
+  --accent: var(--color-primary-subtle);
+  --accent-foreground: var(--color-primary-base);
+  --destructive: var(--color-error-base);
+  --destructive-foreground: var(--color-text-strong);
+  --border: var(--color-border-base);
+  --input: var(--color-ui-soft);
+  --ring: var(--color-primary-base);
+
+  /* Dark Mode Chart Colors (using muted professional colors) */
+  --chart-1: var(--color-primary-base);
+  --chart-2: var(--color-success-base);
+  --chart-3: var(--color-warning-base);
+  --chart-4: var(--color-error-base);
+  --chart-5: #a78bfa;
+
+  /* Dark Mode Sidebar */
+  --sidebar: var(--color-ui-subtle);
+  --sidebar-foreground: var(--color-text-base);
+  --sidebar-primary: var(--color-primary-base);
+  --sidebar-primary-foreground: var(--color-primary-foreground);
+  --sidebar-accent: var(--color-ui-soft);
+  --sidebar-accent-foreground: var(--color-text-subtle);
+  --sidebar-border: var(--color-border-base);
+  --sidebar-ring: var(--color-primary-base);
+
+  /* Dark Mode Shadows */
+  --shadow-2xs: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  --shadow-xs: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px
+    rgb(0 0 0 / 0.3);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px
+    rgb(0 0 0 / 0.3);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+
+  /* Shiki Code Highlighting - Dark Mode */
+  --shiki-foreground: var(--color-text-base);
+  --shiki-background: var(--color-ui-subtle);
+  --shiki-token-constant: var(--color-error-base);
+  --shiki-token-string: var(--color-success-base);
+  --shiki-token-comment: var(--color-text-inactive);
+  --shiki-token-keyword: var(--color-secondary-base);
+  --shiki-token-parameter: var(--color-warning-base);
+  --shiki-token-function: var(--color-primary-base);
+  --shiki-token-string-expression: var(--color-info-base);
+  --shiki-token-punctuation: var(--color-text-soft);
+  --shiki-token-link: var(--color-info-base);
+}
+
+@theme {
+  --color-shiki-foreground: var(--shiki-foreground);
+  --color-shiki-background: var(--shiki-background);
+  --color-shiki-token-constant: var(--shiki-token-constant);
+  --color-shiki-token-string: var(--shiki-token-string);
+  --color-shiki-token-comment: var(--shiki-token-comment);
+  --color-shiki-token-keyword: var(--shiki-token-keyword);
+  --color-shiki-token-parameter: var(--shiki-token-parameter);
+  --color-shiki-token-function: var(--shiki-token-function);
+  --color-shiki-token-string-expression: var(--shiki-token-string-expression);
+  --color-shiki-token-punctuation: var(--shiki-token-punctuation);
+  --color-shiki-token-link: var(--shiki-token-link);
+}
