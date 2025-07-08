@@ -555,7 +555,7 @@ export function UploadEmptyState() {
                   mejor sus hipotecas.
                 </p>
                 {/* Social Share Buttons */}
-                <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
+                <div className="mb-8 flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
                   <Button
                     variant="outline"
                     size="sm"
