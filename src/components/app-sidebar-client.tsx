@@ -98,10 +98,7 @@ export function AppSidebarClient({
     <>
       <Sidebar variant="floating">
         <SidebarHeader>
-          <div className="flex items-center gap-2">
-            <Logo className="size-8" />
-            <span className="font-semibold text-sm">HipotecaFindr</span>
-          </div>
+          <Logo className="w-32 py-2" />
 
           {/* Nueva Hipoteca - Styled like v0 */}
           <Button size="sm" variant="outline" asChild>

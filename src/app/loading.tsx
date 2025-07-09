@@ -39,10 +39,7 @@ export default function Loading() {
       <div className="m-2 flex w-[15rem] flex-col rounded-lg border bg-card p-2">
         {/* Header */}
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Logo className="size-8 opacity-80" />
-            <span className="font-semibold text-sm">HipotecaFindr</span>
-          </div>
+          <Logo className="w-32 py-2 opacity-80" />
 
           {/* Nuevo Contrato Button Placeholder */}
           <div className="h-8 w-full animate-pulse rounded-md border bg-muted/30" />
