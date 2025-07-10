@@ -1,0 +1,56 @@
+# Hipoteca AI - AI-First Development Rules
+
+## 🚨 CRITICAL: Read LLMS.md Files First
+
+Before making ANY changes, read these files to understand the codebase context:
+- `/src/LLMS.md` - Overall architecture, business context, and change history
+- `/src/app/LLMS.md` - Next.js routes, API structure
+- `/src/components/LLMS.md` - Component patterns and UI architecture
+
+These files contain pre-computed context to avoid codebase exploration on every task.
+
+## Core Principles
+
+### 1. Documentation is Non-Negotiable
+- Update relevant LLMS.md files with every change
+- Add change-log entries explaining what changed and why
+- Keep file structure descriptions current
+
+### 2. Spanish Mortgage Market Focus
+- B2C language only - no technical jargon
+- Professional but accessible tone
+- Spanish mortgage regulations and standards
+- 0-100 risk scoring with clear labels
+
+### 3. UI-First Development
+- Design from Spanish consumer perspective
+- Follow existing component patterns in `/src/components/`
+- Use established shadcn/ui components
+- Mobile-first, accessibility-compliant
+
+### 4. AI Integration Standards
+- Dual knowledge sources (contract + general mortgage knowledge)
+- Mandatory source citation for all AI responses
+- Streaming chat interfaces with Vercel AI SDK
+- Background processing via Trigger.dev
+
+### 5. Code Quality
+- Full TypeScript type safety
+- User-scoped data operations
+- Comprehensive error handling
+- Performance optimization for large PDFs
+
+## Tech Stack Reminders
+- Next.js 15 App Router
+- Clerk authentication
+- Redis (metadata) + Weaviate (vectors)
+- Biome for linting/formatting
+- UploadThing for file handling
+
+## Before Deployment
+- Run `npm run lint` and `npm run biome:check`
+- Test from consumer perspective
+- Verify B2C language consistency
+- Update change-logs in LLMS.md files
+
+For detailed rules, see `.cursor/rules/ai-first-manifesto.mdc`

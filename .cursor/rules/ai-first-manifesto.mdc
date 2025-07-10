@@ -1,0 +1,135 @@
+---
+description: AI-First Development Rules based on Crafter Station Manifesto
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# AI-First Manifesto Rules for Hipoteca AI
+
+**CRITICAL: Before making ANY changes to this codebase, you MUST read the LLMS.md files in the relevant directories:**
+- `/src/LLMS.md` - Overall architecture and business context
+- `/src/app/LLMS.md` - API routes and Next.js app structure  
+- `/src/components/LLMS.md` - Component architecture and patterns
+
+These files contain the pre-computed context you need to understand the codebase without exploration.
+
+## Documentation is Non-Negotiable
+
+### 1. LLMS.md Maintenance
+- **ALWAYS** update the relevant LLMS.md file when making changes
+- **ALWAYS** add a change-log entry explaining what changed and why
+- **ALWAYS** update file structure descriptions when adding/removing files
+- **NEVER** leave LLMS.md files outdated after modifications
+
+### 2. Change-Log Format
+When updating LLMS.md files, add entries like:
+```markdown
+**PR #X (Month Year)** - Brief Description
+- What was added/changed/removed
+- Why the change was made
+- How it fits into the overall architecture
+```
+
+## Spanish Mortgage Market Focus
+
+### 3. Language & Tone
+- **Consumer Language**: Always use B2C language, not technical jargon
+- **Spanish Market**: All content must be relevant to Spanish mortgage regulations
+- **Professional but Accessible**: Balance expertise with consumer understanding
+- **Risk Communication**: Use clear 0-100 scoring with understandable labels
+
+### 4. Business Context
+- This is Hipoteca Findr - a mortgage contract analysis tool for Spanish consumers
+- Target: Democratize professional mortgage analysis
+- Core function: AI-powered contract analysis with risk scoring
+- Specialization: Spanish mortgage market ONLY
+
+## UI Development Excellence
+
+### 5. UI-First System Design
+Before implementing ANY feature:
+- **Envision the UX**: Write down the ideal user flow
+- **Provide Examples**: Share screenshots or references of desired UI/UX
+- **Define Schema**: If data mapping is involved, provide clear annotations
+- **Consider Mobile**: Design mobile-first, desktop-enhanced
+
+### 6. Component Development
+- **Follow Existing Patterns**: Check `/src/components/LLMS.md` for established patterns
+- **Modular Design**: Each component should have a single responsibility
+- **Consumer-Focused**: Design for Spanish mortgage consumers, not developers
+- **Accessibility**: WCAG 2.1 AA compliance mandatory
+
+### 7. shadcn/ui Usage
+- Use existing shadcn/ui components from `/src/components/ui/`
+- Maintain consistent `data-slot` attributes for styling
+- Follow the curated design system already established
+- Don't add new UI libraries without strong justification
+
+## Code Quality & Architecture
+
+### 8. TypeScript Standards
+- **Full Type Safety**: No `any` types without explicit justification
+- **Interface Documentation**: Document complex types with business context
+- **Error Handling**: Comprehensive error boundaries and validation
+- **Performance**: Consider re-renders, memoization, and optimization
+
+### 9. AI Integration Patterns
+- **Dual Knowledge Sources**: Contract-specific + general mortgage knowledge
+- **Mandatory Source Citation**: All AI responses must cite sources
+- **Streaming Responses**: Use Vercel AI SDK for chat interfaces
+- **Background Processing**: Heavy AI work goes through Trigger.dev
+
+### 10. Data Architecture
+- **Redis**: Contract metadata, user mappings, chat history
+- **Weaviate**: Vector embeddings for semantic search
+- **Key-based Access**: Use UploadThing keys for contract access
+- **User Scoping**: All data operations must be user-scoped
+
+## Development Workflow
+
+### 11. Before Making Changes
+1. Read relevant LLMS.md files completely
+2. Understand the business context and user needs
+3. Check existing patterns and components
+4. Consider the Spanish mortgage market implications
+5. Plan the change-log entry you'll write
+
+### 12. After Making Changes
+1. Update the relevant LLMS.md file(s)
+2. Add a change-log entry explaining the change
+3. Test the consumer experience, not just functionality
+4. Verify Spanish language and B2C tone consistency
+5. Run linting: `npm run lint` and `npm run biome:check`
+
+### 13. Security & Best Practices
+- **Never expose secrets**: Check for API keys, tokens in code/commits
+- **User Authentication**: All protected routes use Clerk middleware
+- **File Validation**: Validate PDF uploads thoroughly
+- **Rate Limiting**: Consider API abuse prevention
+- **Error Messages**: User-friendly, not technical stack traces
+
+## Testing Philosophy
+
+### 14. User-Centric Testing
+- Test from Spanish consumer perspective
+- Verify B2C language throughout the experience
+- Test edge cases with real mortgage contract scenarios
+- Ensure accessibility compliance
+
+### 15. Performance Standards
+- PDF processing must handle large mortgage contracts
+- Chat responses should feel instant (streaming)
+- Mobile experience must be smooth
+- Background processing should provide clear feedback
+
+## Forbidden Patterns
+
+### 16. Anti-Patterns to Avoid
+- **Technical Jargon**: Never use developer terminology in user interfaces
+- **Generic Mortgage Terms**: Always focus on Spanish market specifics
+- **Outdated Documentation**: Never leave LLMS.md files stale
+- **Non-Consumer Language**: Avoid legal or technical complexity
+- **Missing Source Citations**: AI responses without source attribution
+- **Over-Engineering**: Keep solutions focused on consumer needs
+
+Remember: We're building for Spanish mortgage consumers, not developers. Every decision should optimize for their understanding and success.
