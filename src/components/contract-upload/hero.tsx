@@ -1,7 +1,9 @@
 "use client";
 
+import { processPDF } from "@/actions/process-pdf";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { uploadFiles } from "@/lib/uploadthing";
 import { cn } from "@/lib/utils";
 import {
   ArrowUpFromLine,
@@ -59,6 +61,37 @@ export function ContractUploadHero() {
   const handleCancelUpload = () => {
     setSelectedFile(null);
     setIsAnalyzing(false);
+  };
+
+  const handleAnalyzeContract = async () => {
+    if (!selectedFile) return;
+
+    console.log("Starting PDF analysis");
+    setIsAnalyzing(true);
+    try {
+      const [{ ufsUrl, name, key }] = await uploadFiles("documentUploader", {
+        files: [selectedFile],
+        onUploadProgress: ({ file, progress }) => {
+          console.log("Processing file", "progress", progress);
+        },
+      });
+
+      console.log("File uploaded successfully:", { ufsUrl, name, key });
+      const resp = await processPDF(ufsUrl, name);
+
+      if (!resp.error && resp.runId && resp.token) {
+        console.log("PDF processing started successfully:", resp);
+        router.push(`/checkr/${key}?runId=${resp.runId}&token=${resp.token}`);
+      } else {
+        console.error("Error processing PDF:", resp.error);
+        alert("Error al procesar el PDF. Por favor, inténtalo de nuevo.");
+        setIsAnalyzing(false);
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Error al subir el archivo. Por favor, inténtalo de nuevo.");
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -138,6 +171,7 @@ export function ContractUploadHero() {
                       size="lg"
                       variant="success"
                       className="h-12 w-full cursor-pointer px-6 font-semibold text-base shadow-lg sm:h-14 sm:w-auto sm:px-10 sm:text-lg"
+                      onClick={handleAnalyzeContract}
                       disabled={isAnalyzing}
                     >
                       {isAnalyzing ? (
