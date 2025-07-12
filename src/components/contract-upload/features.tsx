@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowUpFromLine } from "lucide-react";
+import { Card } from "../ui/card";
 
 export function ContractAnalysisFeatures() {
   return (
@@ -21,7 +22,7 @@ export function ContractAnalysisFeatures() {
         </div>
 
         {/* Feature Cards - Grid */}
-        <div className="mb-12 grid grid-cols-1 items-center gap-8 rounded-2xl border border-border-base bg-ui-base p-6 sm:mb-20 sm:gap-12 sm:p-8 lg:grid-cols-2">
+        <Card className="mb-12 grid grid-cols-1 items-center gap-8 p-6 sm:mb-20 sm:gap-12 sm:p-8 lg:grid-cols-2">
           <div className="space-y-6">
             <h3 className="font-semibold text-text-base text-xl sm:text-2xl">
               Resumen Inteligente en Español
@@ -57,7 +58,7 @@ export function ContractAnalysisFeatures() {
             </Button>
           </div>
           <div className="flex justify-center">
-            <div className="w-full max-w-md rounded-2xl border border-border-base bg-ui-subtle p-6 shadow-lg sm:p-8">
+            <div className="w-full max-w-md rounded-md border border-border-base bg-ui-subtle p-6 shadow-lg sm:p-8">
               <div className="space-y-4">
                 <div className="mb-4 flex items-center gap-3">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-info-subtle sm:h-8 sm:w-8">
@@ -95,12 +96,12 @@ export function ContractAnalysisFeatures() {
               </div>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Feature 2: Semáforo de Riesgos (Image Left) */}
-        <div className="mb-12 grid grid-cols-1 items-center gap-8 rounded-2xl border border-border-base bg-ui-base p-6 sm:mb-20 sm:gap-12 sm:p-8 lg:grid-cols-2">
+        <Card className="mb-12 grid grid-cols-1 items-center gap-8 p-6 sm:mb-20 sm:gap-12 sm:p-8 lg:grid-cols-2">
           <div className="order-2 flex justify-center lg:order-1">
-            <div className="w-full max-w-md rounded-2xl border border-border-base bg-ui-subtle p-6 shadow-lg sm:p-8">
+            <div className="w-full max-w-md rounded-md border border-border-base bg-ui-subtle p-6 shadow-lg sm:p-8">
               <div className="space-y-6">
                 <div className="mb-4 flex items-center gap-3">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-info-subtle sm:h-8 sm:w-8">
@@ -204,10 +205,10 @@ export function ContractAnalysisFeatures() {
               <ArrowUpFromLine className="ml-3 h-4 w-4 rotate-90" />
             </Button>
           </div>
-        </div>
+        </Card>
 
         {/* Feature 3: Chat/Pregúntale (Image Right) */}
-        <div className="mb-12 grid grid-cols-1 items-center gap-8 rounded-2xl border border-border-base bg-ui-base p-6 sm:mb-20 sm:gap-12 sm:p-8 lg:grid-cols-2">
+        <Card className="mb-12 grid grid-cols-1 items-center gap-8 bg-ui-base p-6 sm:mb-20 sm:gap-12 sm:p-8 lg:grid-cols-2">
           <div className="space-y-6">
             <h3 className="font-semibold text-text-base text-xl sm:text-2xl">
               Pregúntale a tu Hipoteca
@@ -243,7 +244,7 @@ export function ContractAnalysisFeatures() {
             </Button>
           </div>
           <div className="flex justify-center">
-            <div className="w-full max-w-md rounded-2xl border border-border-base bg-ui-subtle p-6 shadow-lg sm:p-8">
+            <div className="w-full max-w-md rounded-md border border-border-base bg-ui-subtle p-6 shadow-lg sm:p-8">
               <div className="space-y-4">
                 <div className="mb-4 flex items-center gap-3">
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-info-subtle sm:h-8 sm:w-8">
@@ -306,7 +307,7 @@ export function ContractAnalysisFeatures() {
               </div>
             </div>
           </div>
-        </div>
+        </Card>
       </div>
     </div>
   );

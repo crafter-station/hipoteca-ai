@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const cardVariants = cva(
   [
     // base
-    "flex flex-col rounded-xl text-text-base transition-all duration-200 ease-out",
+    "flex flex-col rounded-md text-text-base transition-all duration-200 ease-out",
   ],
   {
     variants: {
