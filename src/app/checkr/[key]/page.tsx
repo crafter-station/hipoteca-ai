@@ -1,7 +1,7 @@
 import { getUserContracts } from "@/actions/get-user-contracts";
 import { getUserId } from "@/lib/auth/server";
 import { Suspense } from "react";
-import { CheckrAnalysisClientRefactored } from "./checkr-analysis-client-refactored";
+import { CheckrAnalysisClient } from "./checkr-analysis-client";
 
 interface CheckrAnalysisPageProps {
   params: Promise<{ key: string }>;
@@ -19,7 +19,7 @@ export default async function CheckrAnalysisPage({
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <CheckrAnalysisClientRefactored
+      <CheckrAnalysisClient
         keyParam={key}
         runId={runId || null}
         token={token || null}
