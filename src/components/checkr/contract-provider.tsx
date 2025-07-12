@@ -44,8 +44,8 @@ export function ContractProvider({
 
   // Update store with run and error data
   useEffect(() => {
-    contractAnalysisStore.getState().setRun(run);
-    contractAnalysisStore.getState().setError(error);
+    contractAnalysisStore.getState().setRun(run ?? null);
+    contractAnalysisStore.getState().setError(error ?? null);
 
     if (run) {
       contractAnalysisStore.getState().handleRunUpdate(run);
