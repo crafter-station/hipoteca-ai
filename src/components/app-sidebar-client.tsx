@@ -121,7 +121,7 @@ const AppSidebarClient = memo(function AppSidebarClient({
           <Button
             variant="ghost"
             onClick={() => setOpen(true)}
-            className="group/search text-muted-foreground hover:bg-[#EDEDED] hover:text-foreground"
+            className="group/search"
             disabled={!isLoaded || !user || contracts.length === 0}
           >
             <Search className="h-4 w-4" />
