@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import type { Contract } from "@/models/contract";
+import { usePDFViewerState } from "@/stores/contract-analysis-store";
 import {
   BarChart3,
   ChevronLeft,
@@ -31,7 +32,7 @@ interface PDFHeaderProps {
   status: string;
   isLoading?: boolean;
   contract: Contract | null;
-  // Toolbar props
+  // Toolbar props (kept for backward compatibility)
   currentPage?: number;
   totalPages?: number;
   scale?: number;
@@ -109,19 +110,34 @@ export function PDFHeader({
   status,
   isLoading = false,
   contract,
-  // Toolbar props
-  currentPage,
-  totalPages,
-  scale,
-  onPreviousPage,
-  onNextPage,
-  onZoomIn,
-  onZoomOut,
-  onToggleFullscreen,
-  onToggleSearch,
+  // Toolbar props (kept for backward compatibility)
+  currentPage: propsCurrentPage,
+  totalPages: propsTotalPages,
+  scale: propsScale,
+  onPreviousPage: propsOnPreviousPage,
+  onNextPage: propsOnNextPage,
+  onZoomIn: propsOnZoomIn,
+  onZoomOut: propsOnZoomOut,
+  onToggleFullscreen: propsOnToggleFullscreen,
+  onToggleSearch: propsOnToggleSearch,
   onToggleChat,
   isChatOpen,
 }: PDFHeaderProps) {
+  // Get PDF viewer state from Zustand store
+  const pdfViewerState = usePDFViewerState();
+
+  // Use store values if available, otherwise fall back to props for backward compatibility
+  const currentPage = pdfViewerState.currentPage || propsCurrentPage;
+  const totalPages = pdfViewerState.totalPages || propsTotalPages;
+  const scale = pdfViewerState.scale || propsScale;
+  const onPreviousPage = pdfViewerState.onPreviousPage || propsOnPreviousPage;
+  const onNextPage = pdfViewerState.onNextPage || propsOnNextPage;
+  const onZoomIn = pdfViewerState.onZoomIn || propsOnZoomIn;
+  const onZoomOut = pdfViewerState.onZoomOut || propsOnZoomOut;
+  const onToggleFullscreen =
+    pdfViewerState.onToggleFullscreen || propsOnToggleFullscreen;
+  const onToggleSearch = pdfViewerState.onToggleSearch || propsOnToggleSearch;
+
   const statusConfig =
     STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || DEFAULT_STATUS;
   const showSpinner = status === "REATTEMPTING" || isLoading;

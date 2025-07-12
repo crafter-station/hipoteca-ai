@@ -1,4 +1,5 @@
 import { loadPDFJS } from "@/lib/pdf-utils";
+import { useUpdatePDFViewerState } from "@/stores/contract-analysis-store";
 import type { PDFViewerState } from "@/types/pdf-viewer";
 import { useCallback, useEffect, useState } from "react";
 
@@ -14,6 +15,7 @@ export const usePDFViewer = (pdfUrl: string) => {
   });
 
   const [shouldAutoScroll, setShouldAutoScroll] = useState(false);
+  const updatePDFViewerState = useUpdatePDFViewerState();
 
   const loadPDF = useCallback(async () => {
     try {
@@ -89,6 +91,30 @@ export const usePDFViewer = (pdfUrl: string) => {
   const setIsFullscreen = useCallback((isFullscreen: boolean) => {
     setState((prev) => ({ ...prev, isFullscreen }));
   }, []);
+
+  // Update Zustand store when PDF state changes
+  useEffect(() => {
+    if (state.pdf) {
+      updatePDFViewerState({
+        currentPage: state.currentPage,
+        totalPages: state.totalPages,
+        scale: state.scale,
+        onPreviousPage: () => goToPage(state.currentPage - 1),
+        onNextPage: () => goToPage(state.currentPage + 1),
+        onZoomIn: zoomIn,
+        onZoomOut: zoomOut,
+      });
+    }
+  }, [
+    state.pdf,
+    state.currentPage,
+    state.totalPages,
+    state.scale,
+    goToPage,
+    zoomIn,
+    zoomOut,
+    updatePDFViewerState,
+  ]);
 
   return {
     ...state,

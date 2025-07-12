@@ -1,10 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {} from "@/components/ui/sheet";
 import { usePDFHighlights } from "@/hooks/use-pdf-highlights";
 import { usePDFSearch } from "@/hooks/use-pdf-search";
 import { usePDFViewer } from "@/hooks/use-pdf-viewer";
+import { useUpdatePDFViewerState } from "@/stores/contract-analysis-store";
 import type { PDFViewerProps } from "@/types/pdf-viewer";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PDFCanvas } from "./pdf-canvas";
@@ -70,10 +70,12 @@ export default function PDFViewer({
       }
     >
   >(new Map());
+
   // Custom hooks
   const pdfViewer = usePDFViewer(pdfUrl);
   const pdfSearch = usePDFSearch();
   const pdfHighlights = usePDFHighlights(instanceId);
+  const updatePDFViewerState = useUpdatePDFViewerState();
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -227,8 +229,8 @@ export default function PDFViewer({
     pdfViewer.goToPage(pdfViewer.currentPage + 1);
   }, [pdfViewer.goToPage, pdfViewer.currentPage]);
 
-  // Expose PDF viewer functions to parent
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  // Expose PDF viewer functions to parent (for backward compatibility)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Keep dependencies minimal to avoid infinite loops
   useEffect(() => {
     if (onPDFViewerReady && pdfViewer.pdf) {
       onPDFViewerReady({
@@ -243,7 +245,7 @@ export default function PDFViewer({
         onToggleSearch: handleToggleSearch,
       });
     }
-  }, []);
+  }, [pdfViewer.pdf]); // Only run when PDF loads, not on every state change
 
   // Add navigate function to window for tooltip buttons
   useEffect(() => {
@@ -275,15 +277,8 @@ export default function PDFViewer({
         ),
       );
 
-      console.log(
-        `📄 SCROLL DETECTION: scrollTop=${scrollState.scrollTop}, pageHeight=${estimatedPageHeight.toFixed(1)}, calculatedPage=${calculatedPage}`,
-      );
-
       // Only update if the page actually changed to avoid unnecessary re-renders
       if (calculatedPage !== pdfViewer.currentPage) {
-        console.log(
-          `📄 PAGE CHANGED: From ${pdfViewer.currentPage} to ${calculatedPage} (scroll: ${scrollState.scrollTop})`,
-        );
         pdfViewer.updateCurrentPage(calculatedPage);
       }
     } else if (
@@ -291,7 +286,6 @@ export default function PDFViewer({
       pdfViewer.currentPage !== 1
     ) {
       // If there's no scroll, we should be on page 1
-      console.log("📄 NO SCROLL: Resetting to page 1");
       pdfViewer.updateCurrentPage(1);
     }
   }, [

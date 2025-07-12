@@ -201,7 +201,6 @@ function CheckrAnalysisContent({
     <SidebarProvider>
       <div className="flex h-screen w-full">
         <AppSidebarClient contracts={memoizedContracts} />
-
         <div className="flex min-w-0 flex-1 flex-col bg-ui-base">
           {/* Sticky Header with PDF Info */}
           <PDFHeader
