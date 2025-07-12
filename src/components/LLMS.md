@@ -12,6 +12,12 @@ src/components/
 │   ├── use-chat-id.ts            # Chat ID state management
 │   ├── use-chat-logic.ts         # Chat business logic
 │   └── use-chat-open.ts          # Chat popup open/close state
+├── checkr/                        # Contract Analysis Components
+│   ├── checkr-layout.tsx         # Shared layout wrapper
+│   ├── error-display.tsx         # Error state components
+│   ├── processing-display.tsx    # Processing state display
+│   ├── task-progress-display.tsx # Task progress visualization
+│   └── task-status-icon.tsx      # Task status icons
 ├── contract-upload/               # Contract Upload Flow
 │   ├── features.tsx              # Feature highlights
 │   ├── footer.tsx                # Upload flow footer
@@ -86,20 +92,29 @@ src/components/
    - **Multi-page Rendering**: Continuous scroll with all pages loaded
    - **Search Capabilities**: Multiple search modes (exact, fuzzy, regex)
 
-3. **📋 Contract Upload Flow (`contract-upload/`)**
+3. **🔍 Contract Analysis System (`checkr/`)**
+
+   - **Modular Architecture**: Separated concerns with dedicated components
+   - **Error State Management**: Comprehensive error handling with consumer-friendly messages
+   - **Real-time Progress**: Visual task progress with Spanish mortgage processing steps
+   - **Status Visualization**: Icon-based status indicators for different task states
+   - **Layout Consistency**: Shared layout wrapper for unified user experience
+   - **Type Safety**: Dedicated interfaces for better development experience
+
+4. **📋 Contract Upload Flow (`contract-upload/`)**
 
    - **Hero Section**: Consumer-facing benefits and value proposition
    - **Features**: Highlights of AI analysis capabilities
    - **Footer**: Trust indicators and security messaging
    - **Spanish Market Focus**: Tailored for Spanish mortgage consumers
 
-4. **🏠 Landing Page (`landing/`)**
+5. **🏠 Landing Page (`landing/`)**
 
    - **SectionWrapper**: Consistent layout for landing sections
    - **SmoothScrollLink**: Navigation between landing sections
    - **Consumer Language**: B2C messaging throughout [[memory:2522684]]
 
-5. **🎨 UI Components (`ui/`)**
+6. **🎨 UI Components (`ui/`)**
    - **shadcn/ui**: Curated component library
    - **Consistent Design System**: Standardized styling and behavior
    - **Accessibility**: ARIA labels and keyboard navigation
@@ -108,6 +123,22 @@ src/components/
 ## Change-Log
 
 ### Recent Major Changes:
+
+**PR #REFACTOR (January 2025)** - Contract Analysis Component Refactoring
+
+- Created new `checkr/` directory with modular contract analysis components
+- Added `CheckrLayout` for consistent layout wrapper across analysis screens
+- Implemented `ErrorDisplay` with comprehensive error state handling
+- Added `ProcessingDisplay` with real-time task progress visualization
+- Created `TaskProgressDisplay` for mortgage processing step tracking
+- Added `TaskStatusIcon` for visual status indicators
+- Refactored monolithic 900+ line component into maintainable architecture
+- Improved type safety with dedicated interfaces and error handling
+- Enhanced consumer-facing language throughout all error messages
+- **UPDATED**: Migrated all components to use Tailwind v4 tokens from `/src/app/tokens.css`
+- **REMOVED**: Legacy shadcn color variables in favor of semantic design tokens
+- **ENHANCED**: Professional color palette with financial status colors
+- **IMPROVED**: Dark mode compatibility with automatic token mapping
 
 **PR #10 (June 2025)** - Chat Popup Integration
 

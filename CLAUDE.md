@@ -46,7 +46,7 @@ bunx trigger.dev@latest deploy
 - **TypeScript**: Type-safe development
 - **Clerk**: Authentication and user management
 - **Biome**: Linting and code formatting
-- **Tailwind CSS**: Styling framework
+- **Tailwind CSS 4**: Styling framework with CSS variables integration
 - **PostHog**: Analytics and feature flags
 - **Trigger.dev**: Background job processing
 - **Upstash Redis**: Data caching and storage
@@ -102,6 +102,7 @@ bunx trigger.dev@latest deploy
 - **Chat popup system** - non-intrusive overlay with source citation
 - **shadcn/ui components** - curated design system with consistent styling
 - **Mobile-first design** - responsive for all screen sizes
+- **Tailwind 4 Design System** - semantic utility classes with CSS variables
 
 **Data Architecture**:
 - **Dual knowledge sources** - contract-specific + general mortgage knowledge
@@ -135,3 +136,4 @@ bunx trigger.dev@latest deploy
 2. Run `bun run lint` and `bun run biome:check`
 3. Test from Spanish consumer perspective
 4. Verify B2C language consistency
+5. Ensure Tailwind 4 utility classes use tokens.css variables (e.g., `bg-primary-base`, `text-subtle`)

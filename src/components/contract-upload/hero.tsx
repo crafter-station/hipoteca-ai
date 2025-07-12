@@ -114,7 +114,6 @@ export function ContractUploadHero() {
 
         <div className="space-y-6 sm:space-y-8">
           {/* Upload Box */}
-          {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
           <div
             className={cn(
               "group relative flex min-h-[140px] w-full cursor-pointer items-center justify-center rounded-xl border border-primary/30 border-dashed p-6 transition-all duration-200 hover:scale-[1.02] hover:border-primary hover:bg-primary/5 sm:min-h-[160px] sm:p-8",

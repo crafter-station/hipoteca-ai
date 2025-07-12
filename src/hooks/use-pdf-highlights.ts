@@ -2,21 +2,24 @@ import type { HighlightRect, TooltipData } from "@/types/pdf-viewer";
 import { useCallback, useRef, useState } from "react";
 
 export const usePDFHighlights = (instanceId: string) => {
-  const [tooltipContent, setTooltipContent] = useState<
-    Map<string, TooltipData>
-  >(new Map());
+  // Use ref instead of state for tooltipContent to avoid re-renders
+  const tooltipContentRef = useRef<Map<string, TooltipData>>(new Map());
+  const [, forceUpdate] = useState({});
+  
   const highlightRects = useRef<Map<number | string, HighlightRect[]>>(
     new Map()
   );
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const clearHighlights = useCallback(() => {
-    setTooltipContent(new Map());
+    tooltipContentRef.current.clear();
     highlightRects.current.clear();
+    forceUpdate({});
   }, []);
 
   const addTooltipContent = useCallback((key: string, data: TooltipData) => {
-    setTooltipContent((prev) => new Map(prev.set(key, data)));
+    tooltipContentRef.current.set(key, data);
+    // Only trigger re-render if component actually needs the tooltip data
   }, []);
 
   const addHighlightRect = useCallback(
@@ -195,7 +198,7 @@ export const usePDFHighlights = (instanceId: string) => {
   );
 
   return {
-    tooltipContent,
+    tooltipContent: tooltipContentRef.current,
     highlightRects: highlightRects, // Return the ref itself, not .current
     clearHighlights,
     addTooltipContent,

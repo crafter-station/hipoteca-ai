@@ -1,8 +1,7 @@
 import { getUserContracts } from "@/actions/get-user-contracts";
 import { getUserId } from "@/lib/auth/server";
-import type { Contract } from "@/models/contract";
 import { Suspense } from "react";
-import { CheckrAnalysisClient } from "./checkr-analysis-client";
+import { CheckrAnalysisClientRefactored } from "./checkr-analysis-client-refactored";
 
 interface CheckrAnalysisPageProps {
   params: Promise<{ key: string }>;
@@ -16,19 +15,11 @@ export default async function CheckrAnalysisPage({
   const { key } = await params;
   const { runId, token } = await searchParams;
   const userId = await getUserId();
-
-  // Fetch user contracts on the server
-  let contracts: Contract[] = [];
-  try {
-    contracts = await getUserContracts(userId);
-  } catch (error) {
-    console.error("Error fetching user contracts:", error);
-    contracts = [];
-  }
+  const contracts = await getUserContracts(userId);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <CheckrAnalysisClient
+      <CheckrAnalysisClientRefactored
         keyParam={key}
         runId={runId || null}
         token={token || null}

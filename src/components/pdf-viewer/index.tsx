@@ -32,12 +32,10 @@ declare global {
 }
 
 export default function PDFViewer({
-  pdfData,
   className = "",
   pdfUrl = "https://arxiv.org/pdf/1706.03762",
   instanceId = "default",
   highlights = [],
-  contract,
   onToggleFullscreen: externalOnToggleFullscreen,
   onToggleSearch: externalOnToggleSearch,
   // Callback to expose PDF viewer functions
@@ -230,6 +228,7 @@ export default function PDFViewer({
   }, [pdfViewer.goToPage, pdfViewer.currentPage]);
 
   // Expose PDF viewer functions to parent
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (onPDFViewerReady && pdfViewer.pdf) {
       onPDFViewerReady({
@@ -244,19 +243,7 @@ export default function PDFViewer({
         onToggleSearch: handleToggleSearch,
       });
     }
-  }, [
-    onPDFViewerReady,
-    pdfViewer.pdf,
-    pdfViewer.currentPage,
-    pdfViewer.totalPages,
-    pdfViewer.scale,
-    handlePreviousPage,
-    handleNextPage,
-    pdfViewer.zoomIn,
-    pdfViewer.zoomOut,
-    handleToggleFullscreen,
-    handleToggleSearch,
-  ]);
+  }, []);
 
   // Add navigate function to window for tooltip buttons
   useEffect(() => {

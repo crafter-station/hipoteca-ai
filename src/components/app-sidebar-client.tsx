@@ -30,6 +30,7 @@ import { UserButton } from "@/components/user-button";
 import type { Contract } from "@/models/contract";
 import { SignedIn, SignedOut, useUser } from "@clerk/clerk-react";
 import Link from "next/link";
+import { memo, useMemo } from "react";
 
 interface ContractItem {
   id: string;
@@ -42,30 +43,34 @@ interface AppSidebarClientProps {
   contracts: Contract[];
 }
 
-export function AppSidebarClient({
+const AppSidebarClient = memo(function AppSidebarClient({
   contracts: initialContracts,
 }: AppSidebarClientProps) {
   const [open, setOpen] = useState(false);
   const { user, isLoaded } = useUser();
 
-  // Transform contracts directly - no state, no effects, no loops
-  const contracts: ContractItem[] = initialContracts
-    .map((contract: Contract) => {
-      // Extract key from pdfUrl (assuming format: https://o6dbw19iyd.ufs.sh/f/{key})
-      const urlParts = contract.pdfUrl.split("/");
-      const key = urlParts[urlParts.length - 1];
+  // Transform contracts directly - memoized to prevent re-renders
+  const contracts: ContractItem[] = useMemo(
+    () =>
+      initialContracts
+        .map((contract: Contract) => {
+          // Extract key from pdfUrl (assuming format: https://o6dbw19iyd.ufs.sh/f/{key})
+          const urlParts = contract.pdfUrl.split("/");
+          const key = urlParts[urlParts.length - 1];
 
-      return {
-        id: contract.id,
-        pdfName: contract.pdfName,
-        createdAt: contract.createdAt,
-        key: key,
-      };
-    })
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+          return {
+            id: contract.id,
+            pdfName: contract.pdfName,
+            createdAt: contract.createdAt,
+            key: key,
+          };
+        })
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        ),
+    [initialContracts],
+  );
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -79,20 +84,27 @@ export function AppSidebarClient({
     return () => document.removeEventListener("keydown", down);
   }, []);
 
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat("es-ES", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(date));
-  };
+  // Format date for display (memoized)
+  const formatDate = useMemo(
+    () => (date: Date) => {
+      return new Intl.DateTimeFormat("es-ES", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      }).format(new Date(date));
+    },
+    [],
+  );
 
-  // Truncate contract name for display
-  const truncateContractName = (name: string, maxLength = 25) => {
-    if (name.length <= maxLength) return name;
-    return `${name.substring(0, maxLength)}...`;
-  };
+  // Truncate contract name for display (memoized)
+  const truncateContractName = useMemo(
+    () =>
+      (name: string, maxLength = 25) => {
+        if (name.length <= maxLength) return name;
+        return `${name.substring(0, maxLength)}...`;
+      },
+    [],
+  );
 
   return (
     <>
@@ -290,4 +302,6 @@ export function AppSidebarClient({
       </CommandDialog>
     </>
   );
-}
+});
+
+export { AppSidebarClient };

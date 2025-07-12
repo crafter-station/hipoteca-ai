@@ -20,6 +20,8 @@ These files contain the pre-computed context you need to understand the codebase
 - **ALWAYS** add a change-log entry explaining what changed and why
 - **ALWAYS** update file structure descriptions when adding/removing files
 - **NEVER** leave LLMS.md files outdated after modifications
+- **NEVER** create separate REFACTORING.md, README.md, or documentation files
+- **ONLY** use the existing LLMS.md files for all documentation updates
 
 ### 2. Change-Log Format
 When updating LLMS.md files, add entries like:
@@ -59,10 +61,21 @@ Before implementing ANY feature:
 - **Consumer-Focused**: Design for Spanish mortgage consumers, not developers
 - **Accessibility**: WCAG 2.1 AA compliance mandatory
 
-### 7. shadcn/ui Usage
+### 7. Design System Usage with Tailwind 4
+- **ALWAYS** use `/src/app/tokens.css` CSS variables with Tailwind 4 utility classes
+- **NEVER** use legacy shadcn CSS variables directly
+- **Use the new token system with Tailwind 4**:
+  - `bg-primary-base`, `text-primary-base`, `border-primary-base`
+  - `bg-secondary-base`, `text-secondary-base`, `border-secondary-base`
+  - `bg-ui-base`, `bg-ui-subtle`, `bg-ui-soft`, `bg-ui-inactive`
+  - `text-base`, `text-subtle`, `text-soft`, `text-inactive`, `text-strong`
+  - `border-base`, `border-subtle`, `border-soft`, `border-strong`
+  - `bg-success-base`, `bg-error-base`, `bg-warning-base`, `bg-info-base`
+  - `text-success-base`, `text-error-base`, `text-warning-base`, `text-info-base`
+- **Professional color palette**: Stick to the curated neutral + financial colors
+- **Tailwind 4 Integration**: CSS variables automatically map to utility classes
 - Use existing shadcn/ui components from `/src/components/ui/`
 - Maintain consistent `data-slot` attributes for styling
-- Follow the curated design system already established
 - Don't add new UI libraries without strong justification
 
 ## Code Quality & Architecture
@@ -131,5 +144,24 @@ Before implementing ANY feature:
 - **Non-Consumer Language**: Avoid legal or technical complexity
 - **Missing Source Citations**: AI responses without source attribution
 - **Over-Engineering**: Keep solutions focused on consumer needs
+- **Creating Extra Documentation**: Never create REFACTORING.md, README.md, or other docs
+- **Legacy CSS Variables**: Never use old shadcn variables, always use tokens.css
+- **Separate Documentation Files**: Only update existing LLMS.md files
+
+## Critical Reminders
+
+### Documentation Policy
+- **ONLY** update existing LLMS.md files in relevant directories
+- **NEVER** create new .md files for documentation
+- **ALL** changes must be logged in the appropriate LLMS.md change-log
+- **DELETE** any accidentally created documentation files
+
+### Styling Requirements
+- **MANDATORY**: Use `/src/app/tokens.css` variables with Tailwind 4 utility classes
+- **FORBIDDEN**: Direct use of legacy CSS variables like `--background`, `--foreground`
+- **REQUIRED**: Professional color palette from tokens.css
+- **ENFORCE**: Consistent design system across all components
+- **TAILWIND 4**: Use semantic utility classes like `bg-primary-base`, `text-subtle`, `border-base`
+- **EXAMPLE USAGE**: `bg-ui-base text-base border-border-base shadow-md`
 
 Remember: We're building for Spanish mortgage consumers, not developers. Every decision should optimize for their understanding and success.

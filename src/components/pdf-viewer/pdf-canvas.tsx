@@ -812,8 +812,6 @@ export function PDFCanvas({
           console.log(`📍 MINIMAP DATA: Added ${annotation.type} at position ${position.toFixed(4)} on page ${pageNum}`);
         }
 
-        // Trigger data update
-        setHighlightDataVersion(prev => prev + 1);
         const spanMatches = mapMatchToSpans(match, indexMap);
 
         if (spanMatches.length === 0) return;
@@ -893,6 +891,9 @@ export function PDFCanvas({
         searchResults: finalData?.searchResults.length || 0
       });
     }
+
+    // Trigger data update once after all highlights are processed
+    setHighlightDataVersion(prev => prev + 1);
 
     // Note: createUnifiedHoverAreas() is now called from renderPage after both search and annotations are processed
   };

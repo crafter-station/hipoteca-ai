@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/popover";
 import { ContractHighlightType } from "@/models/contract";
 import { Info } from "lucide-react";
+import { useMemo } from "react";
 
 interface HighlightLegendProps {
   className?: string;
@@ -133,17 +134,18 @@ function getContractHighlightDescription(
   }
 }
 
-// Create legend items from ContractHighlightType
-const contractLegendItems = Object.values(ContractHighlightType).map(
-  (contractType) => ({
-    type: contractType,
-    color: mapContractHighlightTypeToColor(contractType),
-    label: getContractHighlightTitle(contractType),
-    description: getContractHighlightDescription(contractType),
-  }),
-);
-
 export function HighlightLegend({ className = "" }: HighlightLegendProps) {
+  // Create legend items from ContractHighlightType - memoized to prevent re-creation
+  const contractLegendItems = useMemo(
+    () =>
+      Object.values(ContractHighlightType).map((contractType) => ({
+        type: contractType,
+        color: mapContractHighlightTypeToColor(contractType),
+        label: getContractHighlightTitle(contractType),
+        description: getContractHighlightDescription(contractType),
+      })),
+    [],
+  );
   return (
     <div className={className}>
       <Popover>
