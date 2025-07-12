@@ -120,6 +120,13 @@ src/app/
 - Basic authentication with Clerk
 - Core PDF processing pipeline
 
+**PR #NEW (June 2025)** - Admin Prompt Lab for Non-Técnicos
+
+- Integrated new visual prompt lab in admin interface using `CriteriaBuilder` and `LiveTester` components
+- Replaced raw textarea prompt editing with sectioned, visual criteria editor and live testing for mortgage professionals
+- Why: Enables non-technical users to adjust and test AI mortgage analysis criteria visually, improving accessibility and control
+- How: B2C language, Spanish mortgage market focus, and design system with Tailwind 4 tokens
+
 ## Key Architecture Decisions
 
 1. **App Router Architecture**: Full Next.js 15 App Router with server components

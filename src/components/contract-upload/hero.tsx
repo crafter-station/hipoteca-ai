@@ -116,7 +116,7 @@ export function ContractUploadHero() {
           {/* Upload Box */}
           <div
             className={cn(
-              "group relative flex min-h-[140px] w-full cursor-pointer items-center justify-center rounded-xl border border-primary/30 border-dashed p-6 transition-all duration-200 hover:scale-[1.02] hover:border-primary hover:bg-primary/5 sm:min-h-[160px] sm:p-8",
+              "group relative flex min-h-[140px] w-full cursor-pointer items-center justify-center rounded-xl border border-primary/30 border-dashed p-6 transition-all duration-200 hover:border-primary hover:bg-primary/5 sm:min-h-[160px] sm:p-8",
               isDragOver && "scale-[1.02] border-primary bg-primary/5",
               selectedFile &&
                 "border-success-base/30 bg-success-subtle/10 hover:border-success-base hover:bg-success-subtle/20",
@@ -205,8 +205,8 @@ export function ContractUploadHero() {
                   >
                     <ArrowUpFromLine className="mr-3 size-5 sm:size-6" />
                     <span className="block sm:hidden">SUBIR CONTRATO</span>
-                    <span className="hidden sm:block">
-                      SUBIR CONTRATO DE HIPOTECA
+                    <span className="hidden uppercase sm:block">
+                      Subir contrato de hipoteca
                     </span>
                   </Button>
 

@@ -1,46 +1,167 @@
-import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps, cva } from "class-variance-authority";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-md border px-2 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
+  [
+    // base
+    "inline-flex items-center justify-center rounded-full leading-none font-medium whitespace-nowrap shrink-0",
+    "transition-[color,box-shadow] duration-200 ease-out",
+    // focus
+    "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-primary-base/50",
+    // disabled
+    "disabled:pointer-events-none disabled:opacity-50",
+  ],
   {
     variants: {
       variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
-        destructive:
-          "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        // Filled variants
+        default: "bg-primary-base text-primary-foreground",
+        secondary: "bg-secondary-base text-secondary-foreground",
+
+        // Status variants - filled
+        success: "bg-success-base text-success-foreground",
+        warning: "bg-warning-base text-warning-foreground",
+        error: "bg-error-base text-error-foreground",
+        info: "bg-info-base text-info-foreground",
+
+        // Light variants
+        "success-light": "bg-success-subtle text-success-strong",
+        "warning-light": "bg-warning-subtle text-warning-strong",
+        "error-light": "bg-error-subtle text-error-strong",
+        "info-light": "bg-info-subtle text-info-strong",
+
+        // Soft variants
+        "success-soft": "bg-success-soft text-success-strong",
+        "warning-soft": "bg-warning-soft text-warning-strong",
+        "error-soft": "bg-error-soft text-error-strong",
+        "info-soft": "bg-info-soft text-info-strong",
+
+        // Outline variants
+        outline: "border border-text-base text-text-base bg-transparent",
+        "outline-success":
+          "border border-success-base text-success-base bg-transparent",
+        "outline-warning":
+          "border border-warning-base text-warning-base bg-transparent",
+        "outline-error":
+          "border border-error-base text-error-base bg-transparent",
+        "outline-info": "border border-info-base text-info-base bg-transparent",
+      },
+      size: {
+        xs: "h-4 px-1.5 text-xs gap-1",
+        sm: "h-5 px-2 text-xs gap-1",
+        default: "h-6 px-2.5 text-sm gap-1.5",
+        lg: "h-7 px-3 text-sm gap-1.5",
+      },
+      dot: {
+        true: "pl-1.5",
+        false: "",
       },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
+      dot: false,
     },
   },
 );
 
+interface BadgeProps
+  extends React.ComponentProps<"span">,
+    VariantProps<typeof badgeVariants> {
+  dot?: boolean;
+  dotColor?: "success" | "warning" | "error" | "info" | "default";
+}
+
 function Badge({
   className,
   variant,
-  asChild = false,
+  size,
+  dot = false,
+  dotColor,
+  children,
   ...props
-}: React.ComponentProps<"span"> &
-  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : "span";
+}: BadgeProps) {
+  // Auto-detect dotColor based on variant if not provided
+  const getDefaultDotColor = () => {
+    if (dotColor) return dotColor; // User override takes precedence
+
+    // Auto-detect for light variants
+    if (variant?.includes("-light")) {
+      if (variant === "success-light") return "success";
+      if (variant === "warning-light") return "warning";
+      if (variant === "error-light") return "error";
+      if (variant === "info-light") return "info";
+    }
+
+    // Auto-detect for soft variants
+    if (variant?.includes("-soft")) {
+      if (variant === "success-soft") return "success";
+      if (variant === "warning-soft") return "warning";
+      if (variant === "error-soft") return "error";
+      if (variant === "info-soft") return "info";
+    }
+
+    // Auto-detect for outline variants
+    if (variant?.includes("outline-")) {
+      if (variant === "outline-success") return "success";
+      if (variant === "outline-warning") return "warning";
+      if (variant === "outline-error") return "error";
+      if (variant === "outline-info") return "info";
+    }
+
+    return "default";
+  };
+
+  // For filled variants, dot should be ui-base (white/black) for contrast
+  // For light/soft/outline variants, dot should be the auto-detected or specified color
+  const getActualDotColor = () => {
+    const filledVariants = [
+      "default",
+      "secondary",
+      "success",
+      "warning",
+      "error",
+      "info",
+    ];
+
+    if (filledVariants.includes(variant || "default")) {
+      return "ui-base"; // White dot on colored background
+    }
+
+    // For light, soft, outline variants - use auto-detected or specified dotColor
+    return getDefaultDotColor();
+  };
+
+  const actualDotColor = getActualDotColor();
+
+  const dotColorClasses = {
+    success: "bg-success-base",
+    warning: "bg-warning-base",
+    error: "bg-error-base",
+    info: "bg-info-base",
+    default: "bg-text-base",
+    "ui-base": "bg-ui-base", // White/black dot for filled variants
+  };
 
   return (
-    <Comp
-      data-slot="badge"
-      className={cn(badgeVariants({ variant }), className)}
+    <span
+      className={cn(badgeVariants({ variant, size, dot }), className)}
       {...props}
-    />
+    >
+      {dot && (
+        <span
+          className={cn(
+            "size-1.5 shrink-0 rounded-full",
+            dotColorClasses[actualDotColor as keyof typeof dotColorClasses],
+          )}
+        />
+      )}
+      {children}
+    </span>
   );
 }
 
 export { Badge, badgeVariants };
+export type { BadgeProps };

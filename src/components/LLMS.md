@@ -38,6 +38,12 @@ src/components/
 │   ├── search-panel.tsx          # PDF search interface
 │   ├── text-selection-popup.tsx  # Text selection tooltip
 │   └── toolbar.tsx               # PDF navigation controls
+├── prompt-lab/                   # Visual Prompt Lab for Mortgage Criteria
+│   ├── criteria-builder.tsx      # Visual editor for mortgage evaluation criteria (non-technical UX)
+│   ├── live-tester.tsx           # Live testing UI for prompt criteria (B2C, minimal, effective)
+│   ├── prompt-editor.tsx         # (legacy) Prompt text editor
+│   ├── prompt-tester.tsx         # (legacy) Prompt testing interface
+│   └── prompt-metrics.tsx        # (legacy) Prompt performance metrics
 ├── shared/                        # Shared Components
 │   ├── chat-panel.tsx            # Shared chat interface
 │   ├── header.tsx                # App header
@@ -183,6 +189,14 @@ src/components/
 - Basic chat interface
 - Core UI component library
 - Authentication components
+
+**PR #NEW (June 2025)** - Visual Prompt Lab for Non-Técnicos
+
+- Added `prompt-lab/criteria-builder.tsx`: Visual, sectioned editor for mortgage evaluation criteria, designed for non-technical users (operarios hipotecarios)
+- Added `prompt-lab/live-tester.tsx`: Minimal, effective live testing UI for real-time feedback on prompt changes
+- Updated admin interface to use new visual tools instead of raw textarea editors
+- Why: Empowers mortgage professionals (not developers) to adjust and test AI criteria visually, improving accessibility and control
+- How: Follows B2C language, Spanish mortgage market focus, and design system with Tailwind 4 tokens
 
 ## Key Architecture Decisions
 
